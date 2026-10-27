@@ -65,7 +65,6 @@ h1 {
   font-family: "Young Serif", Georgia, serif;
   font-size: clamp(1.4rem, 5vw, 2rem);
   cursor: pointer;
-  box-shadow: 0 4px 0 var(--roed-moerk);
   transition: transform .15s;
 }
 /* Den lille guldknop på siden af lågen */
@@ -99,8 +98,8 @@ h1 {
    Slås fra, hvis telefonen er sat til at begrænse bevægelse. */
 .laage.i-dag:not(.aabnet) { animation: puls 2.2s ease-in-out infinite; }
 @keyframes puls {
-  0%, 100% { box-shadow: 0 4px 0 var(--roed-moerk), 0 0 0 0 rgba(232,196,106,.6); }
-  50%      { box-shadow: 0 4px 0 var(--roed-moerk), 0 0 0 8px rgba(232,196,106,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232,196,106,.6); }
+  50%      { box-shadow: 0 0 0 8px rgba(232,196,106,0); }
 }
 @media (prefers-reduced-motion: reduce) {
   .laage, .laage.i-dag:not(.aabnet) { animation: none; transition: none; }
@@ -136,3 +135,24 @@ dialog::backdrop { background: rgba(5, 20, 12, .8); }
   background: var(--guld); color: var(--tekst);
   text-align: center; font-size: .95rem;
 }
+
+/* ---------- POINT OG SPØRGSMÅL ---------- */
+#stilling { margin: .6rem 0 0; color: var(--guld); font-weight: 600; font-size: 1.1rem; }
+
+#kort-handling { margin-bottom: 1rem; }
+.kort .spoergsmaal { font-weight: 600; margin-bottom: .6rem; }
+
+/* Svarknapper. Står som .kort .valg, så de vinder over den røde Luk-knap */
+.kort .valg {
+  display: block; width: 100%;
+  margin: 0 0 .5rem;
+  background: #fff; color: var(--tekst);
+  border: 2px solid #d8cdb8; border-radius: 6px;
+  padding: .7rem 1rem; font-size: 1rem; cursor: pointer;
+}
+.kort .valg:hover:not(:disabled) { border-color: var(--roed); }
+.kort .valg.forkert { background: #f1d9d9; border-color: var(--roed); color: #7a2a2a; }
+.kort .valg.rigtig  { background: #dcefd9; border-color: #2e7d32; color: #1d4d20; }
+.kort .valg:disabled { cursor: default; }
+
+.kort .resultat { font-weight: 600; margin: 1rem 0 .8rem; }
