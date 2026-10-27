@@ -1,1 +1,313 @@
-hej
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Julekalender</title>
+
+<!-- Skrifttype fra Google Fonts. Hvis den ikke kan hentes, bruges Georgia i stedet. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&display=swap" rel="stylesheet">
+
+<style>
+  /* ---------- FARVER ----------
+     Her samles alle farver ét sted. Skift dem, og hele siden ændrer udtryk. */
+  :root {
+    --nat: #12301f;        /* mørk grøn baggrund */
+    --nat-lys: #1b4430;    /* lidt lysere grøn til felter */
+    --roed: #b3202a;       /* dørenes farve, som en klassisk julehjerte-rød */
+    --roed-moerk: #8a1620; /* kant og skygge på dørene */
+    --guld: #e8c46a;       /* tal, knopper og detaljer */
+    --papir: #fbf3e4;      /* baggrund på kortet bag lågen */
+    --tekst: #2b2118;      /* tekst på kortet */
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--nat);
+    color: var(--papir);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    /* Plads til telefoners kanter og notch */
+    padding: max(1.5rem, env(safe-area-inset-top)) 1rem max(2rem, env(safe-area-inset-bottom));
+  }
+
+  /* ---------- OVERSKRIFT ---------- */
+  header { text-align: center; margin: 0 auto 2rem; max-width: 36rem; }
+  h1 {
+    font-family: "Young Serif", Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(2rem, 7vw, 3.2rem);
+    margin: 0 0 .5rem;
+    color: var(--guld);
+  }
+  #undertitel { margin: 0; font-size: 1.05rem; line-height: 1.5; opacity: .9; }
+
+  /* ---------- KALENDEREN ----------
+     Et gitter med 4 kolonner på mobil og 6 på større skærme. */
+  #kalender {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .7rem;
+    max-width: 52rem;
+    margin: 0 auto;
+    padding: 0;
+    list-style: none;
+  }
+  @media (min-width: 640px) {
+    #kalender { grid-template-columns: repeat(6, 1fr); gap: .9rem; }
+  }
+
+  /* ---------- EN LÅGE ---------- */
+  .laage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 4;                 /* lidt højere end bred, som en dør */
+    border: 2px solid var(--roed-moerk);
+    border-radius: 6px 6px 3px 3px;
+    background: var(--roed);
+    color: var(--guld);
+    font-family: "Young Serif", Georgia, serif;
+    font-size: clamp(1.4rem, 5vw, 2rem);
+    cursor: pointer;
+    box-shadow: 0 4px 0 var(--roed-moerk);
+    transition: transform .15s;
+  }
+  /* Den lille guldknop på siden af lågen */
+  .laage::after {
+    content: "";
+    position: absolute;
+    right: 10%; top: 50%;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--guld);
+  }
+  .laage:hover:not(:disabled) { transform: translateY(-3px) rotate(-1deg); }
+  .laage:focus-visible { outline: 3px solid var(--guld); outline-offset: 3px; }
+
+  /* Låst låge: gråtonet og kan ikke klikkes */
+  .laage:disabled {
+    background: var(--nat-lys);
+    border-color: #2a5a40;
+    box-shadow: none;
+    color: #7fa38e;
+    cursor: not-allowed;
+  }
+  .laage:disabled::after { background: #4d7a62; }
+
+  /* Åbnet låge: viser et lille hjerte i stedet for tallet */
+  .laage.aabnet { background: var(--nat-lys); border-color: var(--guld); box-shadow: none; }
+  .laage.aabnet .tal { display: none; }
+  .laage.aabnet::before { content: "♥"; color: var(--roed); font-size: 1.6rem; }
+
+  /* Dagens låge pulserer stille, så han kan se hvilken der skal åbnes.
+     Slås fra, hvis telefonen er sat til at begrænse bevægelse. */
+  .laage.i-dag:not(.aabnet) { animation: puls 2.2s ease-in-out infinite; }
+  @keyframes puls {
+    0%, 100% { box-shadow: 0 4px 0 var(--roed-moerk), 0 0 0 0 rgba(232,196,106,.6); }
+    50%      { box-shadow: 0 4px 0 var(--roed-moerk), 0 0 0 8px rgba(232,196,106,0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .laage, .laage.i-dag:not(.aabnet) { animation: none; transition: none; }
+  }
+
+  /* ---------- KORTET BAG LÅGEN ---------- */
+  dialog {
+    border: 0;
+    border-radius: 10px;
+    padding: 0;
+    width: min(92vw, 28rem);
+    background: var(--papir);
+    color: var(--tekst);
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  }
+  dialog::backdrop { background: rgba(5, 20, 12, .8); }
+  .kort { padding: 2rem 1.6rem 1.6rem; text-align: center; }
+  .kort .dag { color: var(--roed); font-family: "Young Serif", Georgia, serif; font-size: 1rem; margin: 0; }
+  .kort h2 { font-family: "Young Serif", Georgia, serif; font-weight: 400; font-size: 1.7rem; margin: .3rem 0 1rem; }
+  .kort p { font-family: Georgia, serif; font-size: 1.1rem; line-height: 1.6; margin: 0 0 1rem; }
+  .kort img { max-width: 100%; border-radius: 6px; margin-bottom: 1rem; }
+  .kort button {
+    background: var(--roed); color: var(--papir);
+    border: 0; border-radius: 6px;
+    padding: .7rem 1.5rem; font-size: 1rem; cursor: pointer;
+  }
+  .kort button:focus-visible { outline: 3px solid var(--guld); outline-offset: 2px; }
+
+  /* Lille hint nederst, kun synlig i testtilstand */
+  #testbanner {
+    max-width: 52rem; margin: 1.5rem auto 0;
+    padding: .6rem 1rem; border-radius: 6px;
+    background: var(--guld); color: var(--tekst);
+    text-align: center; font-size: .95rem;
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1 id="titel">Julekalender</h1>
+  <p id="undertitel"></p>
+</header>
+
+<!-- Selve lågerne bygges af JavaScript længere nede -->
+<ol id="kalender"></ol>
+<div id="testbanner" hidden>Testtilstand: alle låger kan åbnes. Fjern ?test fra adressen for at se den rigtige version.</div>
+
+<!-- Kortet, der åbner sig, når man trykker på en låge -->
+<dialog id="kort">
+  <div class="kort">
+    <p class="dag" id="kort-dag"></p>
+    <h2 id="kort-titel"></h2>
+    <div id="kort-indhold"></div>
+    <button type="button" id="luk">Luk</button>
+  </div>
+</dialog>
+
+<script>
+/* =====================================================
+   1. INDSTILLINGER – ret disse
+   ===================================================== */
+const NAVN = "Min elskede";        // Hans navn eller kælenavn, vises i undertitlen
+const AFSENDER = "Din kone";       // Bruges ikke endnu, men kan bruges i teksterne
+const AAR = new Date().getFullYear(); // Kalenderen bruger automatisk indeværende år
+
+/* =====================================================
+   2. INDHOLD – én post for hver låge
+   -----------------------------------------------------
+   titel: overskrift på kortet
+   tekst: selve beskeden
+   billede: valgfrit, f.eks. "billeder/dag3.jpg" (læg filen i en mappe
+            kaldet "billeder" ved siden af denne fil)
+   Indholdet herunder er kun pladsholdere, som vi skal skrive om.
+   ===================================================== */
+const INDHOLD = {
+  1:  { titel: "Så er vi i gang",       tekst: "Første låge! Her kommer en lille julehilsen hver dag frem til juleaften." },
+  2:  { titel: "Gratis-kupon",          tekst: "Denne kupon giver dig ret til at bestemme aftensmaden i dag." },
+  3:  { titel: "Et minde",              tekst: "Skriv her et fælles minde, f.eks. fra jeres første jul sammen." },
+  4:  { titel: "Dårlig joke",           tekst: "Hvad sagde nissen til træet? Skriv din egen joke her." },
+  5:  { titel: "Dagens sang",           tekst: "Skriv navnet på en julesang, I begge kan lide." },
+  6:  { titel: "Nikolaj-dag",           tekst: "Der er en lille ting til dig i dag. Kig i jakkelommen." },
+  7:  { titel: "Tre grunde",            tekst: "Tre grunde til, at jeg elsker dig." },
+  8:  { titel: "Gratis-kupon",          tekst: "Jeg tager opvasken i aften." },
+  9:  { titel: "Spørgsmål",             tekst: "Hvad er dit bedste julejuleminde fra barndommen?" },
+  10: { titel: "Et billede",            tekst: "Her kan der ligge et foto af jer to.", billede: "" },
+  11: { titel: "Gåde",                  tekst: "Skriv en gåde her. Svaret kommer i morgen." },
+  12: { titel: "Svar på gåden",         tekst: "Her er svaret fra i går." },
+  13: { titel: "Hygge i aften",         tekst: "I aften tænder vi lys og ser en julefilm." },
+  14: { titel: "Gratis-kupon",          tekst: "En times massage, indløses når det passer dig." },
+  15: { titel: "Et minde",              tekst: "Endnu et minde fra jeres tid sammen." },
+  16: { titel: "Dagens udfordring",     tekst: "Send mig et billede af det bedste, du har spist i dag." },
+  17: { titel: "Tre ting",              tekst: "Tre ting, jeg glæder mig til i julen." },
+  18: { titel: "Et billede",            tekst: "Endnu et foto, f.eks. fra en ferie.", billede: "" },
+  19: { titel: "Gratis-kupon",          tekst: "Du bestemmer, hvad vi skal lave i weekenden." },
+  20: { titel: "Dagens sang",           tekst: "En sang, der minder mig om dig." },
+  21: { titel: "Kærlig hilsen",         tekst: "Her kan der stå en længere, personlig besked." },
+  22: { titel: "Snart jul",             tekst: "Kun to dage til. Hvad glæder du dig mest til?" },
+  23: { titel: "Lillejuleaften",        tekst: "I aften pynter vi træ, og der er risalamande til dessert." },
+  24: { titel: "Glædelig jul",          tekst: "Den store overraskelse kommer her. Vi finder på noget særligt." }
+};
+
+/* =====================================================
+   3. LOGIK – her behøver du ikke rette noget
+   ===================================================== */
+
+// Testtilstand: åbn siden med ?test bagpå adressen (f.eks. index.html?test),
+// så kan alle låger åbnes. Send IKKE det link til din mand.
+const TEST = new URLSearchParams(location.search).has("test");
+
+// En fast, blandet rækkefølge, så lågerne ligger spredt som i en rigtig kalender
+const RAEKKEFOELGE = [7,19,3,12,22,1,16,9,24,5,14,20,2,11,17,8,23,4,15,10,21,6,13,18];
+
+// Hvilke låger har han åbnet? Det gemmes i telefonens browser.
+// try/catch gør, at siden stadig virker, hvis browseren blokerer lagring.
+function hentAabnede() {
+  try { return JSON.parse(localStorage.getItem("julekalender-" + AAR)) || []; }
+  catch { return []; }
+}
+function gemAabnet(dag) {
+  const liste = hentAabnede();
+  if (!liste.includes(dag)) liste.push(dag);
+  try { localStorage.setItem("julekalender-" + AAR, JSON.stringify(liste)); } catch {}
+}
+
+// Må lågen åbnes? Ja, hvis datoen er den dag eller senere i december.
+function maaAabnes(dag) {
+  if (TEST) return true;
+  return new Date() >= new Date(AAR, 11, dag); // måned 11 = december
+}
+
+// Er det i dag? (bruges til at lade dagens låge pulsere)
+function erIdag(dag) {
+  const nu = new Date();
+  return nu.getMonth() === 11 && nu.getDate() === dag;
+}
+
+// Byg alle 24 låger og sæt dem ind i siden
+function byg() {
+  const liste = document.getElementById("kalender");
+  const aabnede = hentAabnede();
+  liste.innerHTML = "";
+
+  RAEKKEFOELGE.forEach(dag => {
+    const li = document.createElement("li");
+    const knap = document.createElement("button");
+    knap.className = "laage";
+    knap.innerHTML = '<span class="tal">' + dag + "</span>";
+    knap.setAttribute("aria-label", "Låge " + dag);
+
+    if (aabnede.includes(dag)) knap.classList.add("aabnet");
+    if (erIdag(dag)) knap.classList.add("i-dag");
+
+    if (maaAabnes(dag)) {
+      knap.addEventListener("click", () => aabn(dag, knap));
+    } else {
+      knap.disabled = true; // låst indtil dagen kommer
+    }
+
+    li.appendChild(knap);
+    liste.appendChild(li);
+  });
+}
+
+// Vis kortet bag en låge
+const kort = document.getElementById("kort");
+function aabn(dag, knap) {
+  const post = INDHOLD[dag];
+  document.getElementById("kort-dag").textContent = dag + ". december";
+  document.getElementById("kort-titel").textContent = post.titel;
+
+  const boks = document.getElementById("kort-indhold");
+  boks.innerHTML = "";
+  if (post.billede) {                       // vis kun billede, hvis der er angivet et
+    const img = document.createElement("img");
+    img.src = post.billede;
+    img.alt = "";
+    boks.appendChild(img);
+  }
+  const p = document.createElement("p");
+  p.textContent = post.tekst;
+  boks.appendChild(p);
+
+  kort.showModal();
+  gemAabnet(dag);
+  knap.classList.add("aabnet");
+}
+document.getElementById("luk").addEventListener("click", () => kort.close());
+
+// Klik på den mørke baggrund lukker også kortet
+kort.addEventListener("click", e => { if (e.target === kort) kort.close(); });
+
+// Tekster i toppen
+document.getElementById("undertitel").textContent =
+  "Til " + NAVN + ". En låge om dagen frem til juleaften.";
+if (TEST) document.getElementById("testbanner").hidden = false;
+
+byg();
+</script>
+</body>
+</html>
