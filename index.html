@@ -39,8 +39,8 @@
 /* =====================================================
    1. INDSTILLINGER – ret disse
    ===================================================== */
-const NAVN = "Min elskede";        // Hans navn eller kælenavn, vises i undertitlen
-const AFSENDER = "Din kone";       // Bruges ikke endnu, men kan bruges i teksterne
+const NAVN = "Morten";        // Hans navn eller kælenavn, vises i undertitlen
+const AFSENDER = "Din nudel";       // Bruges ikke endnu, men kan bruges i teksterne
 const AAR = new Date().getFullYear(); // Kalenderen bruger automatisk indeværende år
 
 /* =====================================================
@@ -87,8 +87,14 @@ const INDHOLD = {
 // så kan alle låger åbnes. Send IKKE det link til din mand.
 const TEST = new URLSearchParams(location.search).has("test");
 
+// Nulstilling: åbn siden med ?nulstil bagpå adressen (f.eks. index.html?nulstil),
+// så glemmer siden, hvilke låger der har været åbnet på denne enhed.
+if (new URLSearchParams(location.search).has("nulstil")) {
+  try { localStorage.removeItem("julekalender-" + AAR); } catch {}
+}
+
 // En fast, blandet rækkefølge, så lågerne ligger spredt som i en rigtig kalender
-const RAEKKEFOELGE = [7,19,3,12,22,1,16,9,24,5,14,20,2,11,17,8,23,4,15,10,21,6,13,18];
+const RAEKKEFOELGE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24];
 
 // Hvilke låger har han åbnet? Det gemmes i telefonens browser.
 // try/catch gør, at siden stadig virker, hvis browseren blokerer lagring.
@@ -97,6 +103,7 @@ function hentAabnede() {
   catch { return []; }
 }
 function gemAabnet(dag) {
+  if (TEST) return; // i testtilstand gemmes intet, så det ikke sætter sig fast
   const liste = hentAabnede();
   if (!liste.includes(dag)) liste.push(dag);
   try { localStorage.setItem("julekalender-" + AAR, JSON.stringify(liste)); } catch {}
@@ -105,7 +112,7 @@ function gemAabnet(dag) {
 // Må lågen åbnes? Ja, hvis datoen er den dag eller senere i december.
 function maaAabnes(dag) {
   if (TEST) return true;
-  return new Date() >= new Date(AAR, 10, dag); // måned 11 = december
+  return new Date() >= new Date(AAR, 11, dag); // måned 11 = december
 }
 
 // Er det i dag? (bruges til at lade dagens låge pulsere)
@@ -127,7 +134,8 @@ function byg() {
     knap.innerHTML = '<span class="tal">' + dag + "</span>";
     knap.setAttribute("aria-label", "Låge " + dag);
 
-    if (aabnede.includes(dag)) knap.classList.add("aabnet");
+    // Hjerte kun hvis lågen er åbnet OG dagen er kommet (ellers ligger der en gammel test-rest)
+    if (aabnede.includes(dag) && maaAabnes(dag)) knap.classList.add("aabnet");
     if (erIdag(dag)) knap.classList.add("i-dag");
 
     if (maaAabnes(dag)) {
@@ -171,7 +179,7 @@ kort.addEventListener("click", e => { if (e.target === kort) kort.close(); });
 
 // Tekster i toppen
 document.getElementById("undertitel").textContent =
-  "Til " + NAVN + ". En låge om dagen frem til juleaften.";
+  "Til min nudel";
 if (TEST) document.getElementById("testbanner").hidden = false;
 
 byg();
