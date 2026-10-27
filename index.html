@@ -10,141 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Young+Serif&display=swap" rel="stylesheet">
 
-<style>
-  /* ---------- FARVER ----------
-     Her samles alle farver ét sted. Skift dem, og hele siden ændrer udtryk. */
-  :root {
-    --nat: #12301f;        /* mørk grøn baggrund */
-    --nat-lys: #1b4430;    /* lidt lysere grøn til felter */
-    --roed: #b3202a;       /* dørenes farve, som en klassisk julehjerte-rød */
-    --roed-moerk: #8a1620; /* kant og skygge på dørene */
-    --guld: #e8c46a;       /* tal, knopper og detaljer */
-    --papir: #fbf3e4;      /* baggrund på kortet bag lågen */
-    --tekst: #2b2118;      /* tekst på kortet */
-  }
-
-  * { box-sizing: border-box; }
-
-  body {
-    margin: 0;
-    min-height: 100vh;
-    background: var(--nat);
-    color: var(--papir);
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    /* Plads til telefoners kanter og notch */
-    padding: max(1.5rem, env(safe-area-inset-top)) 1rem max(2rem, env(safe-area-inset-bottom));
-  }
-
-  /* ---------- OVERSKRIFT ---------- */
-  header { text-align: center; margin: 0 auto 2rem; max-width: 36rem; }
-  h1 {
-    font-family: "Young Serif", Georgia, serif;
-    font-weight: 400;
-    font-size: clamp(2rem, 7vw, 3.2rem);
-    margin: 0 0 .5rem;
-    color: var(--guld);
-  }
-  #undertitel { margin: 0; font-size: 1.05rem; line-height: 1.5; opacity: .9; }
-
-  /* ---------- KALENDEREN ----------
-     Et gitter med 4 kolonner på mobil og 6 på større skærme. */
-  #kalender {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: .7rem;
-    max-width: 52rem;
-    margin: 0 auto;
-    padding: 0;
-    list-style: none;
-  }
-  @media (min-width: 640px) {
-    #kalender { grid-template-columns: repeat(6, 1fr); gap: .9rem; }
-  }
-
-  /* ---------- EN LÅGE ---------- */
-  .laage {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 3 / 4;                 /* lidt højere end bred, som en dør */
-    border: 2px solid var(--roed-moerk);
-    border-radius: 6px 6px 3px 3px;
-    background: var(--roed);
-    color: var(--guld);
-    font-family: "Young Serif", Georgia, serif;
-    font-size: clamp(1.4rem, 5vw, 2rem);
-    cursor: pointer;
-    box-shadow: 0 4px 0 var(--roed-moerk);
-    transition: transform .15s;
-  }
-  /* Den lille guldknop på siden af lågen */
-  .laage::after {
-    content: "";
-    position: absolute;
-    right: 10%; top: 50%;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--guld);
-  }
-  .laage:hover:not(:disabled) { transform: translateY(-3px) rotate(-1deg); }
-  .laage:focus-visible { outline: 3px solid var(--guld); outline-offset: 3px; }
-
-  /* Låst låge: gråtonet og kan ikke klikkes */
-  .laage:disabled {
-    background: var(--nat-lys);
-    border-color: #2a5a40;
-    box-shadow: none;
-    color: #7fa38e;
-    cursor: not-allowed;
-  }
-  .laage:disabled::after { background: #4d7a62; }
-
-  /* Åbnet låge: viser et lille hjerte i stedet for tallet */
-  .laage.aabnet { background: var(--nat-lys); border-color: var(--guld); box-shadow: none; }
-  .laage.aabnet .tal { display: none; }
-  .laage.aabnet::before { content: "♥"; color: var(--roed); font-size: 1.6rem; }
-
-  /* Dagens låge pulserer stille, så han kan se hvilken der skal åbnes.
-     Slås fra, hvis telefonen er sat til at begrænse bevægelse. */
-  .laage.i-dag:not(.aabnet) { animation: puls 2.2s ease-in-out infinite; }
-  @keyframes puls {
-    0%, 100% { box-shadow: 0 4px 0 var(--roed-moerk), 0 0 0 0 rgba(232,196,106,.6); }
-    50%      { box-shadow: 0 4px 0 var(--roed-moerk), 0 0 0 8px rgba(232,196,106,0); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .laage, .laage.i-dag:not(.aabnet) { animation: none; transition: none; }
-  }
-
-  /* ---------- KORTET BAG LÅGEN ---------- */
-  dialog {
-    border: 0;
-    border-radius: 10px;
-    padding: 0;
-    width: min(92vw, 28rem);
-    background: var(--papir);
-    color: var(--tekst);
-    box-shadow: 0 20px 60px rgba(0,0,0,.5);
-  }
-  dialog::backdrop { background: rgba(5, 20, 12, .8); }
-  .kort { padding: 2rem 1.6rem 1.6rem; text-align: center; }
-  .kort .dag { color: var(--roed); font-family: "Young Serif", Georgia, serif; font-size: 1rem; margin: 0; }
-  .kort h2 { font-family: "Young Serif", Georgia, serif; font-weight: 400; font-size: 1.7rem; margin: .3rem 0 1rem; }
-  .kort p { font-family: Georgia, serif; font-size: 1.1rem; line-height: 1.6; margin: 0 0 1rem; }
-  .kort img { max-width: 100%; border-radius: 6px; margin-bottom: 1rem; }
-  .kort button {
-    background: var(--roed); color: var(--papir);
-    border: 0; border-radius: 6px;
-    padding: .7rem 1.5rem; font-size: 1rem; cursor: pointer;
-  }
-  .kort button:focus-visible { outline: 3px solid var(--guld); outline-offset: 2px; }
-
-  /* Lille hint nederst, kun synlig i testtilstand */
-  #testbanner {
-    max-width: 52rem; margin: 1.5rem auto 0;
-    padding: .6rem 1rem; border-radius: 6px;
-    background: var(--guld); color: var(--tekst);
-    text-align: center; font-size: .95rem;
-  }
-</style>
+<!-- Udseendet ligger i styles.css ved siden af denne fil -->
+<link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
@@ -238,7 +105,7 @@ function gemAabnet(dag) {
 // Må lågen åbnes? Ja, hvis datoen er den dag eller senere i december.
 function maaAabnes(dag) {
   if (TEST) return true;
-  return new Date() >= new Date(AAR, 11, dag); // måned 11 = december
+  return new Date() >= new Date(AAR, 10, dag); // måned 11 = december
 }
 
 // Er det i dag? (bruges til at lade dagens låge pulsere)
