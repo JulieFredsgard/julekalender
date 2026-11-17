@@ -9,381 +9,67 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Young+Serif&display=swap" rel="stylesheet">
-
-<!-- Udseendet ligger i styles.css ved siden af denne fil -->
 <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
+<!--
+  Filerne i projektet:
+  - indhold.js  : ALT indhold – lågernes tekster, opgaver, præmier og indstillinger. Ret her.
+  - grafik.js   : tegningerne til regneopgaverne.
+  - kalender.js : logikken (point, spil, butik, synkronisering). Behøver ikke rettes.
+  - styles.css  : udseendet.
+-->
+
 <header>
-  <h1 id="titel">Julekalender</h1>
+  <h1>Julekalender</h1>
   <p id="undertitel"></p>
-  <!-- Pointstilling og titel, udfyldes af JavaScript -->
-  <p id="stilling"></p>
+  <div class="status">
+    <p class="titel-linje" id="titel-navn"></p>
+    <div class="niveau-bar" aria-hidden="true"><div id="niveau-fyld"></div></div>
+    <p id="stilling"></p>
+    <ol id="niveauer" class="niveauer"></ol>
+    <button type="button" id="aabn-butik">🎁 Julebutik · <span id="butik-saldo">0</span> point</button>
+  </div>
 </header>
 
-<!-- Selve lågerne bygges af JavaScript længere nede -->
-<ol id="kalender"></ol>
-<div id="testbanner" hidden>Testtilstand: alle låger kan åbnes. Fjern ?test fra adressen for at se den rigtige version.</div>
+<div class="indhold">
+  <!-- Spillehallen: spil, han har låst op, med rekorder -->
+  <aside id="spillehal" class="spillehal">
+    <h2>Spillehallen</h2>
+    <ul id="spillehal-liste"></ul>
+  </aside>
+  <!-- Lågerne bygges af kalender.js -->
+  <ol id="kalender"></ol>
+</div>
+<section id="spilleder" class="kort" hidden></section>
+<div id="testbanner" hidden>Testtilstand: alle låger kan åbnes, og intet gemmes på hans rigtige plads.</div>
 
-<!-- Kortet, der åbner sig, når man trykker på en låge -->
 <dialog id="kort">
   <div class="kort">
     <p class="dag" id="kort-dag"></p>
     <h2 id="kort-titel"></h2>
     <div id="kort-indhold"></div>
-    <!-- Her vises dagens spørgsmål eller resultat -->
     <div id="kort-handling"></div>
     <button type="button" id="luk">Luk</button>
   </div>
 </dialog>
 
-<script>
-/* =====================================================
-   1. INDSTILLINGER – ret disse
-   ===================================================== */
-const NAVN = "Min elskede";        // Hans navn eller kælenavn, vises i undertitlen
-const AFSENDER = "Din kone";       // Bruges ikke endnu, men kan bruges i teksterne
-const AAR = new Date().getFullYear(); // Kalenderen bruger automatisk indeværende år
+<dialog id="butik">
+  <div class="kort">
+    <h2>Julebutikken</h2>
+    <p class="saldo"><strong id="butik-saldo-stor">0</strong> point at bruge</p>
+    <div id="tillykke" class="tillykke" hidden></div>
+    <ul id="butik-liste" class="kuponer"></ul>
+    <h3 id="mine-overskrift" hidden>Mine præmier</h3>
+    <ul id="mine-kuponer" class="kuponer"></ul>
+    <button type="button" id="luk-butik">Luk</button>
+  </div>
+</dialog>
 
-// Synkronisering via Firebase (så point og åbnede låger følger ham på tværs af enheder).
-// Lad begge felter stå tomme (""), så gemmer siden kun lokalt i browseren.
-// DATABASE_URL: adressen til din Firebase Realtime Database, uden slash til sidst.
-// KODE: en lang, tilfældig tekst, som er nøglen til hans data. Gæt ikke, find på noget unikt,
-//       f.eks. "peter-k7x2q9m4". Brug kun bogstaver, tal og bindestreg.
-const DATABASE_URL = "https://julekalender-9bb81-default-rtdb.europe-west1.firebasedatabase.app";
-const KODE = "morten-er-sej-123";
-
-// Titler, han stiger i. Første tal er mindste antal point for titlen.
-// Der er maks. 96 point at hente (24 låger x 4 point).
-const TITLER = [[0, "Nissehjælper"], [25, "Julenisse"], [50, "Nissefar"], [75, "Julemand"]];
-
-/* =====================================================
-   2. INDHOLD – én post for hver låge
-   -----------------------------------------------------
-   titel: overskrift på kortet
-   tekst: selve beskeden
-   billede: valgfrit, f.eks. "billeder/dag3.jpg" (læg filen i en mappe
-            kaldet "billeder" ved siden af denne fil)
-   spoergsmaal: valgfrit. Så skal han svare for at få point. Format:
-       spoergsmaal: { q: "Spørgsmålet?", valg: ["A", "B", "C"], rigtig: 1 }
-     "rigtig" er nummeret på det rigtige svar, hvor det første er 0, det andet 1 osv.
-   Point: rigtigt første gang 3, andet forsøg 1, ellers 0. Låge uden spørgsmål giver 1.
-   Åbner han lågen på selve dagen, får han 1 ekstra point i bonus (hvis han fik point).
-   Indholdet herunder er kun pladsholdere, som vi skal skrive om.
-   ===================================================== */
-const INDHOLD = {
-  1:  { titel: "Så er vi i gang",       tekst: "Første låge! Her kommer en lille julehilsen hver dag frem til juleaften." },
-  2:  { titel: "Gratis-kupon",          tekst: "Denne kupon giver dig ret til at bestemme aftensmaden i dag." },
-  3:  { titel: "Et minde",              tekst: "Skriv her et fælles minde, f.eks. fra jeres første jul sammen.",
-      spoergsmaal: { q: "Hvor var vores første date?", valg: ["Skriv det rigtige her", "Forkert svar", "Endnu et forkert"], rigtig: 0 } },
-  4:  { titel: "Dårlig joke",           tekst: "Hvad sagde nissen til træet? Skriv din egen joke her.",
-      spoergsmaal: { q: "Hvad kalder jeg dig, når jeg er sur?", valg: ["Forkert", "Det rigtige svar", "Forkert igen"], rigtig: 1 } },
-  5:  { titel: "Dagens sang",           tekst: "Skriv navnet på en julesang, I begge kan lide." },
-  6:  { titel: "Nikolaj-dag",           tekst: "Der er en lille ting til dig i dag. Kig i jakkelommen." },
-  7:  { titel: "Tre grunde",            tekst: "Tre grunde til, at jeg elsker dig." },
-  8:  { titel: "Gratis-kupon",          tekst: "Jeg tager opvasken i aften." },
-  9:  { titel: "Spørgsmål",             tekst: "Hvad er dit bedste julejuleminde fra barndommen?",
-      spoergsmaal: { q: "Hvilken julefilm ser vi altid?", valg: ["Forkert", "Forkert igen", "Det rigtige svar"], rigtig: 2 } },
-  10: { titel: "Et billede",            tekst: "Her kan der ligge et foto af jer to.", billede: "" },
-  11: { titel: "Gåde",                  tekst: "Skriv en gåde her. Svaret kommer i morgen." },
-  12: { titel: "Svar på gåden",         tekst: "Her er svaret fra i går." },
-  13: { titel: "Hygge i aften",         tekst: "I aften tænder vi lys og ser en julefilm." },
-  14: { titel: "Gratis-kupon",          tekst: "En times massage, indløses når det passer dig." },
-  15: { titel: "Et minde",              tekst: "Endnu et minde fra jeres tid sammen." },
-  16: { titel: "Dagens udfordring",     tekst: "Send mig et billede af det bedste, du har spist i dag." },
-  17: { titel: "Tre ting",              tekst: "Tre ting, jeg glæder mig til i julen." },
-  18: { titel: "Et billede",            tekst: "Endnu et foto, f.eks. fra en ferie.", billede: "" },
-  19: { titel: "Gratis-kupon",          tekst: "Du bestemmer, hvad vi skal lave i weekenden." },
-  20: { titel: "Dagens sang",           tekst: "En sang, der minder mig om dig." },
-  21: { titel: "Kærlig hilsen",         tekst: "Her kan der stå en længere, personlig besked." },
-  22: { titel: "Snart jul",             tekst: "Kun to dage til. Hvad glæder du dig mest til?" },
-  23: { titel: "Lillejuleaften",        tekst: "I aften pynter vi træ, og der er risalamande til dessert." },
-  24: { titel: "Glædelig jul",          tekst: "Den store overraskelse kommer her. Vi finder på noget særligt." }
-};
-
-/* =====================================================
-   3. LOGIK – her behøver du ikke rette noget
-   ===================================================== */
-
-// Testtilstand: åbn siden med ?test bagpå adressen (f.eks. index.html?test),
-// så kan alle låger åbnes. Send IKKE det link til din mand.
-const TEST = new URLSearchParams(location.search).has("test");
-
-// Nulstilling: åbn siden med ?nulstil bagpå adressen (f.eks. index.html?nulstil),
-// så glemmer siden, hvilke låger der har været åbnet på denne enhed.
-if (new URLSearchParams(location.search).has("nulstil")) {
-  try {
-    localStorage.removeItem("julekalender-" + AAR);
-    localStorage.removeItem("julekalender-point-" + AAR);
-  } catch {}
-}
-
-// Rækkefølgen lågerne vises i. Her står de i tal-orden fra 1 til 24.
-// Vil du have dem blandet igen, kan du selv skrive tallene i en anden rækkefølge.
-const RAEKKEFOELGE = Array.from({ length: 24 }, (_, i) => i + 1);
-
-// Hvilke låger har han åbnet? Det gemmes i telefonens browser.
-// try/catch gør, at siden stadig virker, hvis browseren blokerer lagring.
-function hentAabnede() {
-  try { return JSON.parse(localStorage.getItem("julekalender-" + AAR)) || []; }
-  catch { return []; }
-}
-// AABNEDE er listen over åbnede låger, som lever i hukommelsen mens siden er åben
-let AABNEDE = hentAabnede();
-function gemAabnedeLokalt() {
-  if (TEST) return; // i testtilstand gemmes intet lokalt, så det ikke sætter sig fast
-  try { localStorage.setItem("julekalender-" + AAR, JSON.stringify(AABNEDE)); } catch {}
-}
-function gemAabnet(dag) {
-  if (!AABNEDE.includes(dag)) AABNEDE.push(dag);
-  gemAabnedeLokalt();
-  skriv("aabnet", { [dag]: true });
-}
-
-// ----- SYNKRONISERING -----
-// Pointene ligger i en gratis Firebase Realtime Database og hentes via helt almindelige
-// web-kald (fetch). Er DATABASE_URL eller KODE tom, sker der ingenting online.
-const SYNK = Boolean(DATABASE_URL && KODE);
-// I testtilstand bruges en separat plads (KODE-test), så testen aldrig rører hans rigtige data
-const BASE = DATABASE_URL.replace(/\/$/, "") + "/kalender/" + KODE + (TEST ? "-test" : "");
-
-// Gem en lille ting online. PATCH lægger kun nye ting oven på, og sletter ikke andet.
-async function skriv(sti, data) {
-  if (!SYNK) return;
-  try {
-    await fetch(BASE + "/" + sti + ".json", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    });
-  } catch (e) { console.warn("Kunne ikke gemme online:", e); }
-}
-
-// Firebase kan finde på at returnere en liste med tomme pladser i stedet for et objekt.
-// Denne funktion gør det til et pænt objekt uden tomme poster.
-function tilObjekt(x) {
-  const o = {};
-  if (!x) return o;
-  Object.keys(x).forEach(k => { if (x[k]) o[k] = x[k]; });
-  return o;
-}
-
-// Hent det, der ligger online, og slå det sammen med det, der er på denne enhed
-async function hentOnline() {
-  if (!SYNK) return;
-  try {
-    const svar = await fetch(BASE + ".json");
-    if (!svar.ok) throw new Error("HTTP " + svar.status);
-    const data = (await svar.json()) || {};
-    const onlineScore = tilObjekt(data.score);
-    const onlineAabnet = Object.keys(tilObjekt(data.aabnet)).map(Number);
-
-    // Ting, der kun findes på denne enhed, sendes op
-    const opScore = {};
-    Object.keys(SCORE).forEach(d => { if (!(d in onlineScore)) opScore[d] = SCORE[d]; });
-    const opAabnet = {};
-    AABNEDE.forEach(d => { if (!onlineAabnet.includes(d)) opAabnet[d] = true; });
-    if (Object.keys(opScore).length) skriv("score", opScore);
-    if (Object.keys(opAabnet).length) skriv("aabnet", opAabnet);
-
-    // Det online lægges oven i det lokale. Online vinder, hvis de er uenige.
-    SCORE = { ...SCORE, ...onlineScore };
-    onlineAabnet.forEach(d => { if (!AABNEDE.includes(d)) AABNEDE.push(d); });
-    gemScore();
-    gemAabnedeLokalt();
-    opdaterStilling();
-    byg();
-  } catch (e) { console.warn("Kunne ikke hente online, bruger det lokale:", e); }
-}
-
-// ----- POINT -----
-// SCORE gemmer, hvad han har fået for hver låge: { 5: { point: 3, paaDagen: true }, ... }
-let SCORE = hentScore();
-function hentScore() {
-  try { return JSON.parse(localStorage.getItem("julekalender-point-" + AAR)) || {}; }
-  catch { return {}; }
-}
-function gemScore() {
-  if (TEST) return; // intet gemmes i testtilstand
-  try { localStorage.setItem("julekalender-point-" + AAR, JSON.stringify(SCORE)); } catch {}
-}
-
-// Giv point for en låge. Bonus på 1, hvis det er på selve dagen (og der er point).
-function giv(dag, grundpoint) {
-  const paaDagen = erIdag(dag);
-  const point = grundpoint + (grundpoint > 0 && paaDagen ? 1 : 0);
-  SCORE[dag] = { point, paaDagen };
-  gemScore();
-  skriv("score", { [dag]: SCORE[dag] });
-  opdaterStilling();
-}
-
-function samlet() {
-  return Object.values(SCORE).reduce((sum, x) => sum + x.point, 0);
-}
-function titel(point) {
-  let t = TITLER[0][1];
-  for (const [min, navn] of TITLER) if (point >= min) t = navn;
-  return t;
-}
-function opdaterStilling() {
-  const p = samlet();
-  document.getElementById("stilling").textContent = p + " point, " + titel(p);
-}
-
-// Må lågen åbnes? Ja, hvis datoen er den dag eller senere i december.
-function maaAabnes(dag) {
-  if (TEST) return true;
-  return new Date() >= new Date(AAR, 9, dag); // måned 11 = december
-}
-
-// Er det i dag? (bruges til at lade dagens låge pulsere)
-function erIdag(dag) {
-  const nu = new Date();
-  return nu.getMonth() === 11 && nu.getDate() === dag;
-}
-
-// Byg alle 24 låger og sæt dem ind i siden
-function byg() {
-  const liste = document.getElementById("kalender");
-  const aabnede = AABNEDE;
-  liste.innerHTML = "";
-
-  RAEKKEFOELGE.forEach(dag => {
-    const li = document.createElement("li");
-    const knap = document.createElement("button");
-    knap.className = "laage";
-    knap.innerHTML = '<span class="tal">' + dag + "</span>";
-    knap.setAttribute("aria-label", "Låge " + dag);
-
-    // Hjerte kun hvis lågen er åbnet OG dagen er kommet (ellers ligger der en gammel test-rest)
-    if (aabnede.includes(dag) && maaAabnes(dag)) knap.classList.add("aabnet");
-    if (erIdag(dag)) knap.classList.add("i-dag");
-
-    if (maaAabnes(dag)) {
-      knap.addEventListener("click", () => aabn(dag, knap));
-    } else {
-      knap.disabled = true; // låst indtil dagen kommer
-    }
-
-    li.appendChild(knap);
-    liste.appendChild(li);
-  });
-}
-
-// Vis kortet bag en låge
-const kort = document.getElementById("kort");
-function aabn(dag, knap) {
-  const post = INDHOLD[dag];
-  document.getElementById("kort-dag").textContent = dag + ". december";
-  document.getElementById("kort-titel").textContent = post.titel;
-
-  const boks = document.getElementById("kort-indhold");
-  boks.innerHTML = "";
-  if (post.billede) {                       // vis kun billede, hvis der er angivet et
-    const img = document.createElement("img");
-    img.src = post.billede;
-    img.alt = "";
-    boks.appendChild(img);
-  }
-  const p = document.createElement("p");
-  p.textContent = post.tekst;
-  boks.appendChild(p);
-
-  // Nederste del af kortet: spørgsmål, eller resultat hvis der allerede er svaret
-  const handling = document.getElementById("kort-handling");
-  handling.innerHTML = "";
-  if (SCORE[dag]) {
-    visResultat(dag, handling);
-  } else if (post.spoergsmaal) {
-    visSpoergsmaal(dag, post.spoergsmaal, handling);
-  } else {
-    giv(dag, 1);                            // låge uden spørgsmål giver 1 point
-    visResultat(dag, handling);
-  }
-
-  kort.showModal();
-  gemAabnet(dag);
-  knap.classList.add("aabnet");
-}
-
-// Vis spørgsmålet med svarknapper. Rigtigt første gang 3 point, andet forsøg 1, ellers 0.
-function visSpoergsmaal(dag, sp, handling) {
-  let forsoeg = 0;
-  const q = document.createElement("p");
-  q.className = "spoergsmaal";
-  q.textContent = sp.q;
-  handling.appendChild(q);
-
-  const knapper = sp.valg.map((tekst, i) => {
-    const k = document.createElement("button");
-    k.type = "button";
-    k.className = "valg";
-    k.textContent = tekst;
-    k.addEventListener("click", () => {
-      if (i === sp.rigtig) {
-        giv(dag, forsoeg === 0 ? 3 : 1);
-        k.classList.add("rigtig");
-        afslut();
-      } else {
-        forsoeg++;
-        k.disabled = true;
-        k.classList.add("forkert");
-        if (forsoeg >= 2) {                 // to forkerte: 0 point, vis det rigtige svar
-          giv(dag, 0);
-          knapper[sp.rigtig].classList.add("rigtig");
-          afslut();
-        }
-      }
-    });
-    handling.appendChild(k);
-    return k;
-  });
-
-  // Når der er svaret: lås knapperne og vis resultat
-  function afslut() {
-    knapper.forEach(k => k.disabled = true);
-    visResultat(dag, handling, true);
-  }
-}
-
-// Vis point for dagen
-// beholdSpoergsmaal = true lader spørgsmålet stå, så han kan se hvad der var rigtigt
-function visResultat(dag, handling, beholdSpoergsmaal) {
-  if (!beholdSpoergsmaal) handling.innerHTML = "";
-  const r = SCORE[dag];
-  const p = samlet();
-
-  const tekst = document.createElement("p");
-  tekst.className = "resultat";
-  tekst.textContent = r.point + " point for i dag" + (r.paaDagen && r.point > 0 ? " (inkl. bonus for at åbne på dagen)" : "")
-    + ". I alt " + p + " point, " + titel(p) + ".";
-  handling.appendChild(tekst);
-
-}
-document.getElementById("luk").addEventListener("click", () => kort.close());
-
-// Klik på den mørke baggrund lukker også kortet
-kort.addEventListener("click", e => { if (e.target === kort) kort.close(); });
-
-// Tekster i toppen
-document.getElementById("undertitel").textContent =
-  "Til " + NAVN + ". En låge om dagen frem til juleaften.";
-if (TEST) document.getElementById("testbanner").hidden = false;
-
-// Start: vis med det samme det, der er gemt lokalt, og hent derefter det online
-async function start() {
-  opdaterStilling();
-  byg();
-  // ?nulstil rydder også testpladsen online (aldrig hans rigtige data)
-  if (SYNK && new URLSearchParams(location.search).has("nulstil")) {
-    try { await fetch(DATABASE_URL.replace(/\/$/, "") + "/kalender/" + KODE + "-test.json", { method: "DELETE" }); } catch {}
-  }
-  hentOnline();
-}
-start();
-</script>
+<script src="indhold.js"></script>
+<script src="grafik.js"></script>
+<script src="kalender.js"></script>
 </body>
 </html>

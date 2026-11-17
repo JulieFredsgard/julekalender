@@ -156,3 +156,241 @@ dialog::backdrop { background: rgba(5, 20, 12, .8); }
 .kort .valg:disabled { cursor: default; }
 
 .kort .resultat { font-weight: 600; margin: 1rem 0 .8rem; }
+.kort .info { font-size: 1rem; margin: .4rem 0 .8rem; opacity: .85; }
+
+/* ---------- STATUS I TOPPEN ---------- */
+.status { margin-top: 1.2rem; }
+.titel-linje { margin: 0; font-family: "Young Serif", Georgia, serif; font-size: 1.5rem; color: var(--papir); }
+#aabn-butik {
+  margin-top: .9rem;
+  background: var(--guld); color: var(--tekst);
+  border: 0; border-radius: 999px;
+  padding: .6rem 1.3rem; font-size: 1rem; font-weight: 600; cursor: pointer;
+}
+#aabn-butik:hover { filter: brightness(1.08); }
+#aabn-butik:focus-visible { outline: 3px solid var(--papir); outline-offset: 3px; }
+
+/* ---------- BILLEDGÅDE ---------- */
+.billedramme { overflow: hidden; border-radius: 6px; margin-bottom: 1rem; }
+.billedramme img { display: block; width: 100%; margin: 0; border-radius: 0; transition: transform 1.6s ease-in-out; }
+
+/* ---------- EMOJI-GÅDE OG TEKSTSVAR ---------- */
+.kort .emoji { font-size: 2.6rem; line-height: 1.3; margin: .2rem 0 .8rem; }
+.tekstsvar { display: flex; gap: .5rem; margin-bottom: .4rem; }
+.tekstsvar input {
+  flex: 1; min-width: 0;
+  font-size: 1.05rem; padding: .65rem .8rem;
+  border: 2px solid #d8cdb8; border-radius: 6px; background: #fff; color: var(--tekst);
+}
+.tekstsvar input:focus { outline: none; border-color: var(--roed); }
+.tidligere-gaet { list-style: none; padding: 0; margin: 0 0 .5rem; display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center; }
+.tidligere-gaet li { background: #f1d9d9; color: #7a2a2a; border-radius: 4px; padding: .2rem .6rem; text-decoration: line-through; }
+
+/* ---------- SPIL ---------- */
+.kort .spilstatus { font-weight: 600; margin-bottom: .5rem; }
+/* Start/spil igen: grøn, så den ikke ligner den røde Luk-knap */
+.kort .start {
+  display: block; width: 100%; margin: 0 0 .8rem;
+  background: #2e7d32; color: #fff;
+  font-size: 1.1rem; font-weight: 700; padding: .85rem 1.5rem;
+  box-shadow: 0 3px 0 #1d5420;
+}
+.kort .start:hover:not(:disabled) { filter: brightness(1.1); }
+.kort .start:disabled { opacity: .5; }
+
+/* Pointregler, pointtæller og rekorder */
+.kort .regler {
+  font-size: .95rem; background: #f3ead8; border-radius: 6px;
+  padding: .55rem .8rem; margin-bottom: .8rem;
+}
+.kort .live-point { margin: .2rem 0 .8rem; color: var(--roed); line-height: 1.2; }
+.kort .live-point strong { font-family: "Young Serif", Georgia, serif; font-size: 2.2rem; font-weight: 400; }
+.kort .live-point small { display: block; font-size: .85rem; color: #7a6a58; margin-top: .15rem; }
+.kort .kort-tekst { font-size: 1.02rem; }
+.kort .regel-linje { font-weight: 600; margin-bottom: .8rem; }
+.kort .lille-info { font-size: .85rem; color: #7a6a58; margin: 0 0 .6rem; }
+.kort .proeve-knap { display: block; width: 100%; margin: 0 0 .6rem; background: none; color: #2e7d32; border: 2px solid #2e7d32; font-weight: 600; }
+.kort .proeve-maerke { display: inline-block; background: #e8f2e7; color: #2e7d32; font-weight: 600; font-size: .85rem; border-radius: 999px; padding: .2rem .8rem; margin-bottom: .6rem; }
+.kort .brik.fejl { background: #f1d9d9; border-color: var(--roed); }
+.kort .rekord { font-weight: 600; color: #7a5a10; margin-bottom: .6rem; }
+.kort .ny-rekord { font-family: "Young Serif", Georgia, serif; font-size: 1.4rem; color: #2e7d32; margin: .2rem 0 .6rem; }
+.kort .resultat-point { font-family: "Young Serif", Georgia, serif; font-size: 1.6rem; font-weight: 400; color: #2e7d32; margin: 0 0 .3rem; }
+.kort .resultat p:last-child { font-weight: 400; font-size: 1rem; }
+.kort .hint-knap { background: none; color: #7a5a10; border: 2px solid #d9b65a; padding: .5rem 1rem; margin-bottom: .8rem; }
+.grafik { background: #fff; border-radius: 8px; padding: .4rem; margin: 0 0 1rem; }
+.grafik svg { display: block; width: 100%; height: auto; }
+
+/* Snefnug */
+.snebane {
+  position: relative; height: 320px; overflow: hidden;
+  border-radius: 8px; margin-bottom: 1rem;
+  background: linear-gradient(var(--nat), var(--nat-lys));
+  touch-action: manipulation;
+}
+.kort .fnug {
+  position: absolute; top: -3rem;
+  background: none; padding: .3rem; color: #fff;
+  line-height: 1; border-radius: 50%;
+  animation: fald linear forwards;
+}
+@keyframes fald { to { transform: translateY(380px) rotate(200deg); } }
+
+/* Vendespil */
+.vendebord { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; margin-bottom: 1rem; }
+.kort .brik {
+  aspect-ratio: 1; padding: 0;
+  background: var(--roed); border: 2px solid var(--roed-moerk);
+  font-size: 1.8rem; display: grid; place-items: center; overflow: hidden;
+}
+.kort .brik.vendt { background: #fff; border-color: #d8cdb8; }
+.kort .brik.fundet { background: #dcefd9; border-color: #2e7d32; }
+.kort .brik img { width: 100%; height: 100%; object-fit: cover; margin: 0; border-radius: 0; }
+
+/* Wordle */
+.wordle {
+  display: grid; grid-template-columns: repeat(var(--l, 5), 1fr);
+  gap: .35rem; max-width: 16rem; margin: 0 auto 1rem;
+}
+.wordle .felt {
+  aspect-ratio: 1; display: grid; place-items: center;
+  border: 2px solid #d8cdb8; border-radius: 4px; background: #fff;
+  font-weight: 700; font-size: 1.3rem; text-transform: uppercase;
+}
+.wordle .felt.rigtig  { background: #2e7d32; border-color: #2e7d32; color: #fff; }
+.wordle .felt.findes  { background: #d9a520; border-color: #d9a520; color: #fff; }
+.wordle .felt.forkert { background: #8c8478; border-color: #8c8478; color: #fff; }
+
+/* ---------- JULEBUTIKKEN ---------- */
+#butik h3 { font-family: "Young Serif", Georgia, serif; font-weight: 400; margin: 1.4rem 0 .6rem; }
+.kort .saldo { margin-bottom: .3rem; }
+.kort .lille { font-size: .9rem; opacity: .75; }
+.kuponer { list-style: none; padding: 0; margin: 0 0 1rem; text-align: left; }
+.kupon {
+  display: grid; grid-template-columns: 1fr auto; gap: .3rem .8rem; align-items: center;
+  border: 2px dashed #d8cdb8; border-radius: 8px; background: #fff;
+  padding: .8rem 1rem; margin-bottom: .6rem;
+}
+.kupon-navn { font-family: Georgia, serif; font-size: 1.05rem; }
+.kupon-pris { font-weight: 600; color: var(--roed); white-space: nowrap; }
+.kupon-knapper, .kupon > button { grid-column: 1 / -1; display: flex; gap: .5rem; flex-wrap: wrap; }
+.kort .kupon button { padding: .5rem 1rem; font-size: .95rem; }
+.kort .kupon button:disabled { background: #cfc6b6; color: #6b6255; cursor: not-allowed; }
+.kort .kupon .fortryd { background: none; color: var(--tekst); border: 2px solid #d8cdb8; }
+.kupon.koebt { border-style: solid; border-color: var(--guld); }
+.kupon.indloest { opacity: .6; }
+.kuponer .tom { text-align: center; opacity: .75; }
+.kupon .lille { grid-column: 1 / -1; margin: 0; font-size: .85rem; }
+.tillykke {
+  background: #dcefd9; border: 2px solid #2e7d32; border-radius: 8px;
+  padding: 1rem; margin: 0 0 1rem;
+}
+.kort .tillykke-titel { font-family: "Young Serif", Georgia, serif; font-size: 1.4rem; margin: 0 0 .3rem; }
+.tillykke p { margin-bottom: .6rem; }
+
+/* ---------- REGNEOPGAVER ---------- */
+.kort .regne { font-weight: 400; text-align: left; background: #fff; border-left: 4px solid var(--guld); padding: .8rem 1rem; border-radius: 4px; }
+.kort .hint { font-size: .95rem; color: #7a5a10; margin: .3rem 0; }
+.kort .forklaring { font-size: .95rem; text-align: left; background: #efe6d3; padding: .7rem .9rem; border-radius: 6px; }
+
+/* ---------- DISC GOLF ---------- */
+.discbane {
+  position: relative; height: 300px; overflow: hidden;
+  border-radius: 8px; margin-bottom: .8rem;
+  background: linear-gradient(#cfe3ef 0%, #e9f2f6 42%, #f4f7f4 43%, #dfe9e0 100%);
+}
+.kurv { position: absolute; left: 50%; width: 70px; height: 150px; transform-origin: 50% 0; }
+.kurv-top { position: absolute; left: 5px; right: 5px; top: 0; height: 10px; background: #e2b31b; border-radius: 4px; border: 2px solid #9a7a10; }
+.kaeder {
+  position: absolute; left: 10px; right: 10px; top: 10px; height: 46px;
+  background: repeating-linear-gradient(90deg, #8e959b 0 2px, transparent 2px 7px);
+}
+.kurv-bund { position: absolute; left: 0; right: 0; top: 54px; height: 22px; background: #e2b31b; border-radius: 0 0 14px 14px; border: 2px solid #9a7a10; }
+.kurv-stang { position: absolute; left: 50%; width: 5px; top: 0; height: 150px; margin-left: -2.5px; background: #6d7378; z-index: -1; }
+.kurv.ryst .kaeder { animation: ryst .5s ease-in-out; }
+@keyframes ryst { 0%,100% { transform: none; } 20% { transform: translateX(-3px); } 40% { transform: translateX(3px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(2px); } }
+.disc {
+  position: absolute; left: calc(50% - 22px); bottom: 20px;
+  width: 44px; height: 16px; border-radius: 50%;
+  background: radial-gradient(ellipse at 40% 35%, #ff9e5e, #e8590c);
+  border: 2px solid #b8440a;
+}
+.vind { position: absolute; left: .6rem; top: .5rem; font-size: .9rem; font-weight: 600; color: #2b4a5c; }
+.discbane .besked {
+  position: absolute; left: 0; right: 0; bottom: 3.2rem;
+  font-family: "Young Serif", Georgia, serif; font-size: 1.3rem; color: var(--tekst);
+}
+.maalere { display: grid; gap: .5rem; margin-bottom: .8rem; }
+.maaler { display: grid; grid-template-columns: 3.5rem 1fr; align-items: center; gap: .5rem; text-align: left; font-size: .9rem; font-weight: 600; }
+.spor { position: relative; height: 18px; background: #e8dfcd; border-radius: 9px; overflow: hidden; }
+.spor .zone { position: absolute; top: 0; bottom: 0; background: #9ccc9a; }
+.spor .markoer { position: absolute; top: -2px; bottom: -2px; width: 4px; margin-left: -2px; background: var(--roed); }
+.spor .fyld { position: absolute; left: 0; top: 7px; height: 4px; background: var(--roed); }
+.spor .fyld::after { content: ""; position: absolute; right: -2px; top: -9px; width: 4px; height: 22px; background: var(--roed); }
+
+/* ---------- PRINT-TÅRNET ---------- */
+.printer {
+  position: relative; height: 320px; overflow: hidden;
+  border-radius: 8px; margin-bottom: .8rem;
+  background: linear-gradient(#2a2f33, #1c2023);
+  touch-action: manipulation; cursor: pointer;
+}
+.stak { position: absolute; inset: 0; bottom: 10px; transition: transform .25s; }
+.lag { position: absolute; background: var(--farve); border-top: 1px solid rgba(255,255,255,.35); border-bottom: 1px solid rgba(0,0,0,.25); }
+.lag.plade { background: #6d7378; }
+.lag.perfekt { box-shadow: 0 0 8px var(--farve); }
+.lag.falder { animation: falder .8s ease-in forwards; }
+@keyframes falder { to { transform: translateY(260px) rotate(25deg); opacity: 0; } }
+.lag.aktiv { box-shadow: 0 0 6px #ffb37a; }
+/* Dysen sidder lige over det øverste lag og kører på en skinne */
+.skinne { position: absolute; left: 0; right: 0; height: 5px; background: #4a5156; border-radius: 3px; }
+.dyse { position: absolute; width: 26px; height: 32px; margin-left: -13px; }
+.dyse-krop { position: absolute; left: 0; right: 0; top: 0; height: 22px; background: linear-gradient(#c3c8cb, #80878c); border-radius: 3px; }
+.dyse-spids { position: absolute; left: 8px; right: 8px; top: 22px; height: 10px; background: #d9a520; clip-path: polygon(0 0, 100% 0, 60% 100%, 40% 100%); }
+.kort .fnug.guld { text-shadow: 0 0 8px #ffd54a; }
+
+/* ---------- NIVEAU-BAR ---------- */
+.titel-linje { margin-bottom: .5rem; }
+.niveau-bar { height: 12px; max-width: 22rem; margin: 0 auto; background: var(--nat-lys); border-radius: 6px; overflow: hidden; border: 1px solid #2a5a40; }
+#niveau-fyld { height: 100%; width: 0; background: linear-gradient(90deg, #d9a520, var(--guld)); border-radius: 6px; transition: width .6s ease; }
+#stilling { font-size: .95rem; font-weight: 600; margin: .45rem 0 .4rem; }
+.niveauer { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem .9rem; font-size: .82rem; }
+.niveauer li { color: #7fa38e; }
+.niveauer li.naaet { color: var(--guld); font-weight: 600; }
+.niveauer li.naaet::before { content: "★ "; }
+
+/* ---------- LAYOUT: SPILLEHAL + KALENDER ----------
+   Mobil: Spillehallen som en vandret række over lågerne. Bred skærm: i siden. */
+.indhold { max-width: 52rem; margin: 0 auto; display: grid; gap: 1.2rem; }
+.indhold #kalender { margin: 0; width: 100%; max-width: none; }
+@media (min-width: 980px) {
+  .indhold { max-width: 68rem; grid-template-columns: 14rem 1fr; align-items: start; }
+  .spillehal { position: sticky; top: 1rem; }
+}
+.spillehal { background: var(--nat-lys); border: 1px solid #2a5a40; border-radius: 10px; padding: .8rem; }
+.spillehal h2 { font-family: "Young Serif", Georgia, serif; font-weight: 400; color: var(--guld); font-size: 1.15rem; margin: 0 0 .6rem; }
+#spillehal-liste { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; }
+@media (min-width: 980px) { #spillehal-liste { grid-template-columns: 1fr; } }
+.spil-kort {
+  width: 100%; display: grid; gap: .1rem; justify-items: center; text-align: center;
+  background: var(--nat); color: var(--papir); border: 1px solid var(--guld); border-radius: 8px;
+  padding: .55rem .3rem; cursor: pointer; font: inherit;
+}
+@media (min-width: 980px) {
+  .spil-kort { grid-template-columns: auto 1fr; justify-items: start; text-align: left; column-gap: .6rem; padding: .6rem .7rem; }
+  .spil-kort .spil-ikon { grid-row: span 2; }
+}
+.spil-kort:hover:not(:disabled) { background: #0d2417; }
+.spil-kort:focus-visible { outline: 3px solid var(--guld); outline-offset: 2px; }
+.spil-kort.laast { border-color: #2a5a40; color: #7fa38e; cursor: not-allowed; }
+.spil-ikon { font-size: 1.5rem; line-height: 1; }
+.spil-navn { font-weight: 600; font-size: .85rem; }
+.spil-rekord { font-size: .75rem; color: var(--guld); }
+.spil-kort.laast .spil-rekord { color: #7fa38e; }
+
+/* ---------- SPILLEDER ---------- */
+body.spilleder-tilstand .indhold, body.spilleder-tilstand .status { display: none; }
+#spilleder { max-width: 40rem; margin: 0 auto; background: var(--papir); color: var(--tekst); border-radius: 10px; }
+#spilleder h2 { margin-top: 0; }
+#spilleder h3 { font-family: "Young Serif", Georgia, serif; font-weight: 400; margin: 1.4rem 0 .6rem; }
+.oversigt { width: 100%; border-collapse: collapse; text-align: left; font-size: .95rem; }
+.oversigt th, .oversigt td { padding: .45rem .5rem; border-bottom: 1px solid #e3d9c6; }
