@@ -4,21 +4,28 @@
    ===================================================== */
 
 /* ---------- 1. INDSTILLINGER ---------- */
-const NAVN = "Min elskede";        // Hans navn eller kælenavn, vises i undertitlen
-const AFSENDER = "mig";            // Dit navn. Står på præmierne og i beskeden, han sender dig
+const OVERSKRIFT = "Mortens Jule-Open";      // Overskriften øverst på siden
+const UNDEROVERSKRIFT = "Merry Discmas";   // Linjen i håndskrift under overskriften
+const NAVN = "Min elskede";        // Hans navn eller kælenavn
+const AFSENDER = "mig";            // Dit navn. Står i beskeden, han sender dig, når han køber noget
 const AAR = new Date().getFullYear();
 
 // Firebase: så point, køb og rekorder følger ham på tværs af enheder
 const DATABASE_URL = "https://julekalender-9bb81-default-rtdb.europe-west1.firebasedatabase.app";
 const KODE = "morten-er-sej-123";
 
-const DAGSBONUS = 10;      // ekstra point for at åbne lågen på selve dagen
-const REKORDBONUS = 5;     // point for at slå sin rekord i Spillehallen
+// Op til 100 point om dagen: 50 for hullet og 50 for caddie-opgaven
+const DAGSBONUS = 0;       // ekstra point for at spille dagens hul på selve dagen (0 = ingen)
 
-// Titler: [mindste antal optjente point, navn]. Han rykker ikke ned, når han handler.
-const TITLER = [[0, "Nissehjælper"], [400, "Julenisse"], [900, "Nissefar"], [1400, "Julemand"]];
+// Point for dagens hul efter score (højst 50)
+const HUL_POINT = { ace: 50, eagle: 45, birdie: 40, par: 30, bogey: 20, dobbeltbogey: 10, vaerre: 5 };
+const CADDIE_MAKS = 50;    // caddie-opgaverne giver op til 50 point
 
-/* ---------- 2. JULEBUTIKKEN ----------
+// Niveauer: [mindste antal optjente point, navn]. Han rykker ikke ned, når han handler.
+// Der er højst 2400 point i alt (24 dage x 100).
+const TITLER = [[0, "Rookie"], [400, "Amatør"], [900, "Advanced"], [1400, "Pro"], [1900, "Verdensmester"]];
+
+/* ---------- 2. JULEBUTIKPEN ----------
    id: kort navn uden mellemrum (må ikke ændres efter køb) · navn: står på præmien · pris: i point
    Du kan se alle køb på adressen med ?spilleder bagpå. */
 const KUPONER = [
@@ -30,145 +37,87 @@ const KUPONER = [
   { id: "disc",      navn: "[En ny disc, f.eks. en bestemt putter]", pris: 1000 }
 ];
 
-/* ---------- 3. LÅGERNE ----------
-   Hver låge har en titel, en kort tekst og ÉN opgave:
+/* ---------- 3. BANEN: ÉT HUL PR. DAG ----------
+   navn:    hullets navn
+   par:     3 eller 4
+   laengde: afstand fra tee til kurv i meter (drive op til ca. 110 m)
+   kurvX:   kurvens placering til siden i meter (0 = lige ud, negativ = venstre)
+   traeer:  antal træer (de placeres automatisk, men altid ens for samme hul)
+   vand:    "foran" (vand foran kurven), "side" (vand langs den ene side) eller udelad
+   vind:    0 = vindstille, 1 = normal, 2 = blæsende
+   Huller under 60 m er "ace-huller": første kast kan gå direkte i kurven. */
+const HULLER = {
+  1:  { navn: "Første kast",       par: 3, laengde: 60,  kurvX: 0,   traeer: 3,  vind: 0 },
+  2:  { navn: "Grantunnelen",      par: 3, laengde: 75,  kurvX: 5,   traeer: 10, vind: 0.5 },
+  3:  { navn: "Sneboldbakken",     par: 3, laengde: 85,  kurvX: -8,  traeer: 6,  vind: 1 },
+  4:  { navn: "Nissestien",        par: 4, laengde: 120, kurvX: 10,  traeer: 10, vind: 0.5 },
+  5:  { navn: "Isøen",             par: 3, laengde: 70,  kurvX: 0,   traeer: 3,  vind: 1, vand: "foran" },
+  6:  { navn: "Ace-hullet",        par: 3, laengde: 45,  kurvX: 0,   traeer: 2,  vind: 0.5 },
+  7:  { navn: "Rensdyrsvinget",    par: 4, laengde: 130, kurvX: -15, traeer: 12, vind: 1 },
+  8:  { navn: "Juletræsalléen",    par: 3, laengde: 90,  kurvX: 0,   traeer: 14, vind: 0.5 },
+  9:  { navn: "Kælkebakken",       par: 3, laengde: 80,  kurvX: 12,  traeer: 6,  vind: 1.5 },
+  10: { navn: "Den lange",         par: 4, laengde: 150, kurvX: 0,   traeer: 8,  vind: 1 },
+  11: { navn: "Det frosne vandhul",par: 3, laengde: 85,  kurvX: 6,   traeer: 6,  vind: 1, vand: "side" },
+  12: { navn: "Pebernødden",       par: 3, laengde: 65,  kurvX: -10, traeer: 9,  vind: 1 },
+  13: { navn: "Ace-hullet 2",      par: 3, laengde: 50,  kurvX: 4,   traeer: 4,  vind: 1 },
+  14: { navn: "Skovens hjerte",    par: 4, laengde: 125, kurvX: -5,  traeer: 16, vind: 0.5 },
+  15: { navn: "Vindmøllen",        par: 3, laengde: 90,  kurvX: 0,   traeer: 4,  vind: 2 },
+  16: { navn: "Søhullet",          par: 4, laengde: 140, kurvX: 8,   traeer: 8,  vind: 1, vand: "foran" },
+  17: { navn: "Granskoven",        par: 3, laengde: 80,  kurvX: -6,  traeer: 16, vind: 1 },
+  18: { navn: "Nordlyset",         par: 4, laengde: 145, kurvX: 15,  traeer: 10, vind: 1.5 },
+  19: { navn: "Isbjørnen",         par: 3, laengde: 95,  kurvX: -4,  traeer: 8,  vind: 1.5, vand: "side" },
+  20: { navn: "Ace-hullet 3",      par: 3, laengde: 55,  kurvX: -5,  traeer: 5,  vind: 1.5 },
+  21: { navn: "Snestormen",        par: 4, laengde: 135, kurvX: 0,   traeer: 12, vind: 2 },
+  22: { navn: "Kanebanen",         par: 3, laengde: 85,  kurvX: 8,   traeer: 10, vind: 1.5, vand: "foran" },
+  23: { navn: "Lillejuleaften",    par: 4, laengde: 155, kurvX: -10, traeer: 14, vind: 2, vand: "side" },
+  24: { navn: "Nordpolen",         par: 3, laengde: 75,  kurvX: 0,   traeer: 10, vind: 1.5, vand: "foran" }
+};
 
-   spil: { type: "discgolf", kast: [3, 4, 5, 6, 7], vind: 1 }   put 5 gange (afstande i meter, vind 0-2)
-   spil: { type: "printtaarn" }                                  print 30 lag
-   spil: { type: "snefnug" }                                     fang snefnug i 25 sekunder
-   spil: { type: "vendespil", symboler: ["🎄","⭐","🎁","❄️","🦌","🔔"] }   find 6 par
-   spil: { type: "wordle", ord: "NISSE" }                        gæt ordet
-
-   regne: { q: "...", svar: 157, enhed: "N", tolerance: 0.01, hint: "...", forklaring: "...", grafik: "kane" }
-       tolerance: hvor meget svaret må afvige (0.01 = 1 %). grafik: en tegning fra grafik.js.
-
-   tekstsvar: { q: "🏠🎄😱👦", svar: ["alene hjemme", "home alone"] }   billed- og emoji-gåder
-
-   billede: "Billeder/foto.jpg", zoom: 6, fokus: "50% 50%"   billedgåde: zoomer ud for hvert forkert gæt
-   dobbelt: true                                              dobbelte point
-
-   Spillene (ikke wordle) bliver låst op i Spillehallen, når han har spillet dem første gang.
-   Tekster i [KANTEDE PARENTESER] er pladsholdere.
-   ===================================================== */
-const INDHOLD = {
-  1:  { titel: "Velkommen",
-        tekst: "Hver dag venter en opgave. Saml point, stig i graderne, og brug pointene i Julebutikken. Første opgave: gæt juleordet.",
-        spil: { type: "wordle", ord: "NISSE" } },
-
-  2:  { titel: "Putting i sneen",
-        tekst: "Tryk for at sigte, tryk igen for kraft. Ram den grønne zone.",
-        spil: { type: "discgolf", kast: [3, 4, 5, 6, 7], vind: 0.5 } },
-
-  3:  { titel: "Kanens trækkraft",
-        tekst: "Rensdyrene vil vide, hvor hårdt de skal trække.",
-        regne: { q: "Kanen vejer 400 kg, og μ = 0,04. Hvor stor kraft skal der til for at holde konstant fart på fladt terræn? (g = 9,82 m/s², svar i hele newton)",
-                 svar: 157, enhed: "N", tolerance: 0.01, grafik: "kane",
-                 hint: "Ved konstant fart er trækkraften lig gnidningen: F = μ · m · g",
-                 forklaring: "0,04 · 400 · 9,82 = 157 N" } },
-
-  4:  { titel: "Snestorm",
-        tekst: "Fang snefnuggene. Guldstjernerne tæller tredobbelt.",
-        spil: { type: "snefnug" } },
-
-  5:  { titel: "Billedgåde",
-        tekst: "Hvor er det? Billedet zoomer ud for hvert forkert gæt.",
-        billede: "Billeder/Finland_foto.jpg", zoom: 6, fokus: "50% 50%",
-        tekstsvar: { svar: ["finland"] } },
-
-  6:  { titel: "Julestjerner",
-        tekst: "Nisserne vil printe julestjerner.",
-        regne: { q: "En stjerne vejer 38 g, og hvert print spilder 5 g. Hvor mange hele stjerner kan du printe af 1 kg PLA?",
-                 svar: 23, enhed: "stjerner", tolerance: 0, grafik: "filament",
-                 hint: "Hvert print bruger 38 + 5 gram.",
-                 forklaring: "1000 / 43 = 23,3 → 23 stjerner" } },
-
-  7:  { titel: "Print-tårnet",
-        tekst: "Tryk, når laget står præcist over det forrige. Det, der stikker ud, falder af.",
-        spil: { type: "printtaarn" } },
-
-  8:  { titel: "Vendespil",
-        tekst: "Find alle 6 par.",
-        spil: { type: "vendespil", symboler: ["🎄", "⭐", "🎁", "❄️", "🦌", "🔔"] } },
-
-  9:  { titel: "Cirkel 2",
-        tekst: "Længere putts og mere vind.",
-        spil: { type: "discgolf", kast: [5, 6, 7, 8, 9], vind: 1 } },
-
-  10: { titel: "Gearkassen",
-        tekst: "Samlebåndet kører for hurtigt.",
-        regne: { q: "Hvor mange omdrejninger i minuttet laver den sidste aksel?",
-                 svar: 120, enhed: "o/min", tolerance: 0, grafik: "gear",
-                 hint: "Gang med (tænder ind / tænder ud) for hvert trin.",
-                 forklaring: "1440 · 18/54 · 12/48 = 120 o/min" } },
-
-  11: { titel: "Emoji-gåde",
-        tekst: "Hvilken julefilm?",
-        tekstsvar: { q: "🏠🎄😱👦", svar: ["alene hjemme", "home alone"] } },
-
-  12: { titel: "Julewordle",
-        tekst: "Gæt juleordet.",
-        spil: { type: "wordle", ord: "GAVER" } },
-
-  13: { titel: "Snestorm 2",
-        tekst: "Kan du slå din rekord?",
-        spil: { type: "snefnug" } },
-
-  14: { titel: "Printtid",
-        tekst: "Når nisserne at printe pynten?",
-        regne: { q: "Juletræet er 72 mm højt, laghøjden er 0,2 mm, og hvert lag tager 18 sekunder. Hvor mange minutter tager printet?",
-                 svar: 108, enhed: "min", tolerance: 0, grafik: "printtid",
-                 hint: "Find først antallet af lag.",
-                 forklaring: "72 / 0,2 = 360 lag · 360 · 18 s = 6480 s = 108 min" } },
-
-  15: { titel: "Billedgåde",
-        tekst: "[Hvor er vi her?]",
-        billede: "", zoom: 6, fokus: "50% 50%",
-        tekstsvar: { svar: ["[rigtigt svar]"] } },
-
-  16: { titel: "Print-tårnet 2",
-        tekst: "30 lag, ingen support.",
-        spil: { type: "printtaarn" } },
-
-  17: { titel: "Hjulmøtrikkerne",
-        tekst: "Kanen skal have vinterhjul på.",
-        regne: { q: "Møtrikkerne skal spændes med 110 Nm, og nøglen er 0,35 m. Hvor stor kraft skal der til? (svar i hele newton)",
-                 svar: 314, enhed: "N", tolerance: 0.005, grafik: "moment",
-                 hint: "Moment = kraft · arm",
-                 forklaring: "110 / 0,35 = 314 N" } },
-
-  18: { titel: "Vendespil: værkstedet",
-        tekst: "Find alle 6 par.",
-        spil: { type: "vendespil", symboler: ["🥏", "⚙️", "🔧", "🔩", "🖨️", "🎄"] } },
-
-  19: { titel: "Julewordle",
-        tekst: "Hænger tit på døren.",
-        spil: { type: "wordle", ord: "KRANS" } },
-
-  20: { titel: "Storm på banen",
-        tekst: "Det blæser for alvor.",
-        spil: { type: "discgolf", kast: [6, 7, 8, 9, 10], vind: 2 } },
-
-  21: { titel: "Emoji-gåde",
-        tekst: "Hvilken julesang?",
-        tekstsvar: { q: "🔔🔔🔔🛷❄️", svar: ["jingle bells", "bjældeklang"] } },
-
-  22: { titel: "Discens flugt",
-        tekst: "Fysik uden løft og luftmodstand.",
-        regne: { q: "Disc'en kastes med 25 m/s i 10° vinkel. Hvor langt flyver den? (g = 9,82 m/s², svar i hele meter)",
+/* ---------- 4. CADDIE-OPGAVER: ÉN PR. DAG ----------
+   Ekstra point ved siden af hullet (op til 50).
+   wordle: { ord: "KURVE" }                     50 point, hvert ekstra gæt −8
+   regne:  { q, svar, enhed, tolerance, forklaring, grafik }   50 point, forkert svar −15
+           tolerance: hvor meget svaret må afvige (0.01 = 1 %). grafik: en tegning fra grafik.js
+   emoji:  { q: "🐦", svar: ["birdie"] }       50 point, forkert gæt −15 */
+const CADDIE = {
+  1:  { wordle: { ord: "KURVE" } },
+  2:  { wordle: { ord: "HYZER" } },
+  3:  { regne: { q: "Du kaster med 25 m/s i 10° vinkel. Uden løft og luftmodstand: hvor langt flyver disc'en? (g = 9,82 m/s², hele meter)",
                  svar: 22, enhed: "m", tolerance: 0.03, grafik: "disc",
-                 hint: "R = v² · sin(2θ) / g",
                  forklaring: "625 · sin(20°) / 9,82 = 21,8 ≈ 22 m" } },
-
-  23: { titel: "Mesterskabet",
-        tekst: "Dobbelte point!",
-        dobbelt: true,
-        spil: { type: "discgolf", kast: [6, 7, 8, 9, 10], vind: 1.5 } },
-
-  24: { titel: "Glædelig jul",
-        tekst: "[Din julehilsen.] Sidste opgave giver dobbelte point.",
-        dobbelt: true,
-        regne: { q: "Julemanden glider 6 m ned gennem skorstenen uden gnidning. Hvor hurtigt rammer han pejsen? (g = 9,82 m/s², svar i hele m/s)",
-                 svar: 11, enhed: "m/s", tolerance: 0.03, grafik: "skorsten",
-                 hint: "m · g · h = ½ · m · v²",
-                 forklaring: "√(2 · 9,82 · 6) = 10,9 ≈ 11 m/s" } }
+  4:  { wordle: { ord: "DRIVE" } },
+  5:  { regne: { q: "18 huller: 12 er par 3 og 6 er par 4. Du laver 4 birdies, 2 bogeys og resten par. Hvor mange kast bruger du i alt?",
+                 svar: 58, enhed: "kast", tolerance: 0, grafik: "scorekort",
+                 forklaring: "Par = 12 · 3 + 6 · 4 = 60. 60 − 4 + 2 = 58 kast" } },
+  6:  { emoji: { q: "🐦", svar: ["birdie", "birdy"] } },
+  7:  { wordle: { ord: "BOGEY" } },
+  8:  { regne: { q: "En disc er 21 cm i diameter og roterer 15 gange i sekundet. Hvor hurtigt bevæger kanten sig? (hele m/s)",
+                 svar: 10, enhed: "m/s", tolerance: 0.05, grafik: "spin",
+                 forklaring: "π · 0,21 m · 15 = 9,9 ≈ 10 m/s" } },
+  9:  { wordle: { ord: "KÆDER" } },
+  10: { regne: { q: "Disc'en er 4 sekunder i luften, og sidevinden skubber den i gennemsnit 2,5 m/s til siden. Hvor mange meter bliver den skubbet?",
+                 svar: 10, enhed: "m", tolerance: 0, grafik: "vind",
+                 forklaring: "2,5 m/s · 4 s = 10 m" } },
+  11: { wordle: { ord: "PUTTE" } },
+  12: { emoji: { q: "1️⃣🥏🎯", svar: ["ace", "hole in one", "hole-in-one"] } },
+  13: { wordle: { ord: "GLIDE" } },
+  14: { regne: { q: "En putter på 175 g rammer kæderne med 8 m/s og stopper på 0,05 sekunder. Hvor stor gennemsnitlig kraft bremser den? (hele newton)",
+                 svar: 28, enhed: "N", tolerance: 0.02, grafik: "kaeder",
+                 forklaring: "0,175 kg · 8 m/s / 0,05 s = 28 N" } },
+  15: { wordle: { ord: "MANDO" } },
+  16: { regne: { q: "Du har 12 discs på i gennemsnit 172 g i tasken, og tasken vejer selv 1,8 kg. Hvor mange gram bærer du i alt?",
+                 svar: 3864, enhed: "g", tolerance: 0,
+                 forklaring: "12 · 172 g + 1800 g = 3864 g" } },
+  17: { wordle: { ord: "KASTE" } },
+  18: { emoji: { q: "⛓️🎶", svar: ["kædemusik", "chains", "chain music", "kæder"] } },
+  19: { wordle: { ord: "TRÆER" } },
+  20: { regne: { q: "Dit drive flyver 96 m på 4 sekunder. Hvad er gennemsnitsfarten i km/t? (hele tal)",
+                 svar: 86, enhed: "km/t", tolerance: 0.01,
+                 forklaring: "96 / 4 = 24 m/s · 3,6 = 86,4 ≈ 86 km/t" } },
+  21: { wordle: { ord: "BANEN" } },
+  22: { regne: { q: "For sjov kaster du en disc lodret op med 15 m/s. Hvor højt kommer den? (g = 9,82 m/s², hele meter)",
+                 svar: 11, enhed: "m", tolerance: 0.05,
+                 forklaring: "225 / 19,64 = 11,46 ≈ 11 m" } },
+  23: { wordle: { ord: "EAGLE" } },
+  24: { wordle: { ord: "GAVER" } }
 };
