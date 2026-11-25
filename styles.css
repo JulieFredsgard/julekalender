@@ -183,7 +183,7 @@ h1 .logo-open { color: var(--messing); }
   .tavle-top { grid-template-columns: 1fr 1fr auto; }
   .logo { grid-column: 1 / -1; padding: .9rem 1rem .5rem; gap: .7rem; }
   .logo-maerke { width: 2rem; }
-  .tal-felt { min-width: 0; padding: .65rem 1rem; }
+  .tal-felt { min-width: 0; padding: .65rem 1rem; align-content: start; }   /* så tallene står lige højt, selv om teksten under fylder en eller to linjer */
   .tal-felt strong { font-size: 1.8rem; }
   #aabn-butik { padding: 0 1.1rem; font-size: 1.15rem; gap: .4rem; }
   .niveau { display: block; padding: .8rem 1rem 1.15rem; }
