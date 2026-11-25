@@ -7,6 +7,9 @@ const PARAMS = new URLSearchParams(location.search);
 // ?test: alle huller kan spilles, og intet gemmes på hans rigtige plads. Send IKKE det link til ham.
 // ?test=navn giver en separat testplads. ?test&nulstil rydder testpladsen.
 const TEST = PARAMS.has("test");
+// ?test=navn&dag=5 lader som om det er den 5. december: dag 1-5 er åbne, resten er låst. Virker kun i testtilstand.
+const DAGPARAM = parseInt(PARAMS.get("dag"), 10);
+const TESTDAG = TEST && DAGPARAM >= 1 && DAGPARAM <= 24 ? DAGPARAM : 0;
 // ?spilleder: din oversigt over hans scorer, point og køb
 const SPILLEDER = PARAMS.has("spilleder");
 const DAGE = Array.from({ length: 24 }, (_, i) => i + 1);
@@ -124,8 +127,8 @@ function opdaterTop() {
 }
 
 /* ---------- DATOER ---------- */
-function maaSpilles(dag) { return TEST || new Date() >= new Date(AAR, 11, dag); }
-function erIdag(dag) { const n = new Date(); return n.getMonth() === 11 && n.getDate() === dag; }
+function maaSpilles(dag) { if (TESTDAG) return dag <= TESTDAG; return TEST || new Date() >= new Date(AAR, 11, dag); }
+function erIdag(dag) { if (TESTDAG) return dag === TESTDAG; const n = new Date(); return n.getMonth() === 11 && n.getDate() === dag; }
 
 /* ---------- HJÆLPERE ---------- */
 function el(tag, klasse, tekst) {
@@ -1217,6 +1220,7 @@ async function visSpilleder() {
 { const ord = OVERSKRIFT.trim().split(" "), sidste = ord.pop(); const t = document.getElementById("titel"); t.textContent = ord.join(" ") + " "; t.appendChild(el("span", "logo-open", sidste)); document.title = OVERSKRIFT; }
 document.getElementById("undertitel").textContent = UNDEROVERSKRIFT;
 if (TEST) document.getElementById("testbanner").hidden = false;
+if (TESTDAG) document.getElementById("testbanner").textContent = "Testtilstand: siden tror, det er den " + TESTDAG + ". december. Intet gemmes på hans rigtige plads.";
 async function start() {
   if (SPILLEDER) return visSpilleder();
   opdaterTop();
