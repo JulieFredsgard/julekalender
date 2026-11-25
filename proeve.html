@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prøvehul</title>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&display=swap" rel="stylesheet">
+<!-- PRØVESIDE (version 3): putting-stil til alle kast, set bagfra. Påvirker ikke selve kalenderen. -->
+<style>
+  :root { --nat: #12301f; --roed: #b3202a; --guld: #e8c46a; --papir: #fbf3e4; --tekst: #2b2118; --groen: #2e7d32; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--nat); color: var(--papir); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; padding: 1rem; }
+  main { max-width: 32rem; margin: 0 auto; }
+  h1 { font-family: "Young Serif", Georgia, serif; font-weight: 400; color: var(--guld); text-align: center; margin: 0 0 .2rem; font-size: 1.8rem; }
+  .under { text-align: center; opacity: .8; margin: 0 0 1rem; font-size: .9rem; }
+  .kort { background: var(--papir); color: var(--tekst); border-radius: 12px; padding: .9rem; }
+  .status { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 .5rem; }
+  .status strong { font-family: "Young Serif", Georgia, serif; font-weight: 400; font-size: 1.25rem; }
+  .status span { font-weight: 700; font-size: .95rem; }
+  .scene { position: relative; }
+  canvas { display: block; width: 100%; border-radius: 10px; }
+  .minikort { position: absolute; right: 8px; top: 8px; width: 64px; height: 92px; border-radius: 6px; border: 2px solid rgba(255,255,255,.8); }
+  .besked { text-align: center; min-height: 1.5em; margin: .6rem 0; font-weight: 700; font-size: 1.1rem; }
+  .maalere { display: grid; gap: .5rem; margin-bottom: .8rem; }
+  .maaler { display: grid; grid-template-columns: 3.4rem 1fr; align-items: center; gap: .5rem; font-size: .9rem; font-weight: 700; }
+  .spor { position: relative; height: 22px; background: #e8dfcd; border-radius: 11px; overflow: hidden; }
+  .zone { position: absolute; top: 0; bottom: 0; background: #9ccc9a; }
+  .markoer { position: absolute; top: -2px; bottom: -2px; width: 4px; margin-left: -2px; background: var(--roed); }
+  .fyld { position: absolute; left: 0; top: 9px; height: 4px; background: var(--roed); }
+  .fyld::after { content: ""; position: absolute; right: -2px; top: -9px; width: 4px; height: 22px; background: var(--roed); }
+  .stor { display: block; width: 100%; padding: .9rem; font-size: 1.15rem; font-weight: 700; border: 0; border-radius: 8px; background: var(--groen); color: #fff; cursor: pointer; box-shadow: 0 3px 0 #1d5420; }
+  .stor:disabled { opacity: .45; cursor: default; }
+  .hjaelp { font-size: .85rem; color: #6b5c4b; margin: .5rem 0 0; text-align: center; }
+  .igen { display: block; margin: .8rem auto 0; background: none; border: 2px solid var(--roed); color: var(--roed); border-radius: 8px; padding: .5rem 1rem; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Prøvehul</h1>
+  <p class="under">Par 3 · 85 m · Kurven står bag en gruppe træer</p>
+  <div class="kort">
+    <p class="status"><strong id="kasttype">Drive</strong><span id="info"></span></p>
+    <div class="scene">
+      <canvas id="lerred" width="720" height="560"></canvas>
+      <canvas id="mini" class="minikort" width="128" height="184"></canvas>
+    </div>
+    <p class="besked" id="besked"></p>
+    <div class="maalere">
+      <div class="maaler"><span>Sigte</span><div class="spor"><div class="zone" id="sigte-zone"></div><div class="markoer" id="sigte-markoer"></div></div></div>
+      <div class="maaler"><span>Kraft</span><div class="spor"><div class="zone" id="kraft-zone"></div><div class="fyld" id="kraft-fyld"></div></div></div>
+    </div>
+    <button type="button" class="stor" id="knap">Sigt!</button>
+    <p class="hjaelp">Tryk én gang for at sigte og én gang for kraft. Ram de grønne zoner. Den grønne sigtezone flytter sig med vinden.</p>
+    <button type="button" class="igen" id="igen">Start hullet forfra</button>
+  </div>
+</main>
+
+<script>
+/* ---------- HULLET (meter) ---------- */
+const HUL = { par: 3, kurv: { x: -6, y: 85 }, bredde: 24 };
+const TRAEER = [
+  // To træer danner en smal port lige foran kurven: et præcist kast går igennem
+  { x: -0.8, y: 68, r: 1.8 }, { x: -9.5, y: 63, r: 2 }, { x: -12, y: 72, r: 2.4 }, { x: -15, y: 56, r: 2 },
+  { x: -18, y: 36, r: 2.4 }, { x: -12, y: 33, r: 2 }, { x: 13, y: 38, r: 2.2 }, { x: 19, y: 34, r: 2.4 },
+  { x: 8, y: 55, r: 1.8 }, { x: 16, y: 72, r: 2.4 }, { x: -20, y: 80, r: 2.2 }, { x: 4, y: 94, r: 2 }
+];
+
+/* ---------- KASTTYPER ----------
+   Samme to tryk til alle kast. Jo længere kast, jo større bliver fejlen i meter. */
+const TYPER = {
+  drive:    { navn: "Drive",    maks: 110, sigteTol: 0.15, kraftVindue: 0.09, vinkelFejl: 3.5, laengdeFejl: 0.10, fart: 1.15 },
+  approach: { navn: "Approach", maks: 60,  sigteTol: 0.14, kraftVindue: 0.09, vinkelFejl: 3,   laengdeFejl: 0.08, fart: 1.0 },
+  putt:     { navn: "Putt" }
+};
+const typeFor = d => d > 60 ? "drive" : d > 10 ? "approach" : "putt";
+
+let pos, kast, vind, fase, sigte = 0, kraft = 0, t0 = 0, raf = null, faerdig = false, sidsteBane = [];
+const lerred = document.getElementById("lerred"), ctx = lerred.getContext("2d");
+const mini = document.getElementById("mini"), mctx = mini.getContext("2d");
+const W = lerred.width, H = lerred.height, HORISONT = 120, F = 880;
+const $ = id => document.getElementById(id);
+const afst = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const tilKurv = () => afst(pos, HUL.kurv);
+
+/* ---------- PARAMETRE FOR DETTE KAST ---------- */
+let P = {};
+function kastParametre() {
+  const d = tilKurv(), type = typeFor(d), T = TYPER[type];
+  if (type === "putt") {
+    return { type, d, sigteTol: Math.max(0.09, 0.2 - 0.009 * d), kraftVindue: Math.max(0.05, 0.14 - 0.007 * d),
+             idealKraft: Math.min(0.85, 0.3 + 0.055 * d), vindEffekt: vind * 0.03 * (d / 7), fart: 0.75 + d * 0.045 };
+  }
+  // Drive og approach: kraften skal passe til afstanden (eller fuld kraft, hvis kurven er længere væk end disc'en kan nå)
+  const maalD = Math.min(d, T.maks);
+  return { type, d, maalD, sigteTol: T.sigteTol, kraftVindue: T.kraftVindue,
+           idealKraft: 0.25 + 0.6 * (maalD / T.maks), vindEffekt: vind * 0.025, fart: T.fart, T,
+           omvej: findAabning(maalD) };
+}
+// Står et træ i vejen, sigter vi gennem den nærmeste åbning i stedet (vinkel i radianer)
+function findAabning(laengde) {
+  const fri = a => {
+    for (let i = 2; i <= 30; i++) {
+      const v = laengde * i / 30, w = tilVerden(Math.sin(a) * v, Math.cos(a) * v);
+      if (afst(w, pos) > 2 && TRAEER.some(t => afst(w, t) < t.r + 0.8)) return false;
+    }
+    return true;
+  };
+  for (let g = 0; g <= 45; g += 3) {
+    for (const s of g ? [1, -1] : [1]) { const a = s * g * Math.PI / 180; if (fri(a)) return a; }
+  }
+  return 0;
+}
+
+/* ---------- KAMERA OG TEGNING ---------- */
+function kameraHoejde() { return Math.max(1.6, Math.min(6, tilKurv() * 0.07)); }
+function retning() { return Math.atan2(HUL.kurv.x - pos.x, HUL.kurv.y - pos.y); }
+function tilLokal(p) { const a = retning(), rx = p.x - pos.x, ry = p.y - pos.y; return { u: rx * Math.cos(a) - ry * Math.sin(a), v: rx * Math.sin(a) + ry * Math.cos(a) }; }
+function tilVerden(u, v) { const a = retning(); return { x: pos.x + u * Math.cos(a) + v * Math.sin(a), y: pos.y - u * Math.sin(a) + v * Math.cos(a) }; }
+function projicer(u, v, z) { const dz = Math.max(0.5, v); return { x: W / 2 + u * F / dz, y: HORISONT + (kameraHoejde() - (z || 0)) * F / dz, s: F / dz }; }
+
+function tegn(flyvende) {
+  const g = ctx.createLinearGradient(0, 0, 0, HORISONT); g.addColorStop(0, "#a9c8de"); g.addColorStop(1, "#e3edf3");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, HORISONT);
+  ctx.fillStyle = "#5f8a72";
+  for (let i = 0; i < 38; i++) { const x = i * 20 - 6, h = 12 + (i * 37 % 13); ctx.beginPath(); ctx.moveTo(x, HORISONT); ctx.lineTo(x + 10, HORISONT - h); ctx.lineTo(x + 20, HORISONT); ctx.fill(); }
+  const g2 = ctx.createLinearGradient(0, HORISONT, 0, H); g2.addColorStop(0, "#e2eae6"); g2.addColorStop(1, "#ffffff");
+  ctx.fillStyle = g2; ctx.fillRect(0, HORISONT, W, H - HORISONT);
+  // OB-linjer
+  ctx.strokeStyle = "#d33"; ctx.setLineDash([12, 9]); ctx.lineWidth = 3;
+  [-HUL.bredde, HUL.bredde].forEach(xb => {
+    ctx.beginPath(); let start = true;
+    for (let y = -10; y <= 140; y += 2) { const l = tilLokal({ x: xb, y }); if (l.v < 0.6) { start = true; continue; } const p = projicer(l.u, l.v); start ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y); start = false; }
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  // Cirkel 1 omkring kurven
+  ctx.strokeStyle = "rgba(43,33,24,.25)"; ctx.lineWidth = 2; ctx.setLineDash([8, 8]); ctx.beginPath(); let f = true;
+  for (let a = 0; a <= 6.3; a += 0.1) { const l = tilLokal({ x: HUL.kurv.x + Math.cos(a) * 10, y: HUL.kurv.y + Math.sin(a) * 10 }); if (l.v < 0.6) { f = true; continue; } const p = projicer(l.u, l.v); f ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y); f = false; }
+  ctx.stroke(); ctx.setLineDash([]);
+
+  // Træer, kurv og disc sorteret efter afstand
+  const ting = TRAEER.map(t => ({ type: "trae", r: t.r, l: tilLokal(t) })).concat([{ type: "kurv", l: tilLokal(HUL.kurv) }]);
+  if (flyvende) ting.push({ type: "disc", l: tilLokal(flyvende), z: flyvende.z });
+  ting.filter(t => t.l.v > 0.6).sort((a, b) => b.l.v - a.l.v).forEach(t => {
+    const p = projicer(t.l.u, t.l.v), s = p.s;
+    if (t.type === "trae") {
+      const h = 7.5 * s, b = t.r * 1.25 * s;
+      ctx.fillStyle = "rgba(0,0,0,.12)"; ctx.beginPath(); ctx.ellipse(p.x, p.y, b, b * 0.25, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = "#6d4c2f"; ctx.fillRect(p.x - b * 0.1, p.y - h * 0.22, b * 0.2, h * 0.22);
+      ctx.fillStyle = "#2a5f3e"; ctx.beginPath(); ctx.moveTo(p.x, p.y - h); ctx.lineTo(p.x + b, p.y - h * 0.18); ctx.lineTo(p.x - b, p.y - h * 0.18); ctx.fill();
+      ctx.fillStyle = "#3a7d52"; ctx.beginPath(); ctx.moveTo(p.x, p.y - h); ctx.lineTo(p.x + b * 0.15, p.y - h * 0.18); ctx.lineTo(p.x - b, p.y - h * 0.18); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.moveTo(p.x, p.y - h); ctx.lineTo(p.x + b * 0.32, p.y - h * 0.74); ctx.lineTo(p.x - b * 0.32, p.y - h * 0.74); ctx.fill();
+    } else if (t.type === "kurv") {
+      const k = Math.max(s, 6);   // kurven er altid til at se
+      ctx.fillStyle = "rgba(0,0,0,.12)"; ctx.beginPath(); ctx.ellipse(p.x, p.y, 0.4 * k, 0.1 * k, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = "#6d7378"; ctx.fillRect(p.x - 0.03 * k, p.y - 1.4 * k, 0.06 * k, 1.4 * k);
+      ctx.fillStyle = "#e2b31b"; ctx.fillRect(p.x - 0.33 * k, p.y - 1.42 * k, 0.66 * k, 0.09 * k); ctx.fillRect(p.x - 0.32 * k, p.y - 0.86 * k, 0.64 * k, 0.2 * k);
+      ctx.strokeStyle = "#8e959b"; ctx.lineWidth = Math.max(1, 0.015 * k);
+      for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(p.x + i * 0.08 * k, p.y - 1.33 * k); ctx.lineTo(p.x + i * 0.05 * k, p.y - 0.86 * k); ctx.stroke(); }
+    } else {
+      const pd = projicer(t.l.u, t.l.v, t.z), r = Math.max(5, 0.14 * pd.s);
+      ctx.fillStyle = "rgba(0,0,0,.18)"; ctx.beginPath(); ctx.ellipse(p.x, p.y, r, r * 0.3, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = "#e8590c"; ctx.beginPath(); ctx.ellipse(pd.x, pd.y, r, r * 0.38, 0, 0, 7); ctx.fill();
+    }
+  });
+  // Sigtelinje og målfelt, mens han sigter og vælger kraft
+  if (!flyvende && !faerdig && (fase === "sigte" || fase === "kraft")) tegnSigte();
+  // Markør over kurven, så den altid kan findes
+  const kl = tilLokal(HUL.kurv);
+  if (kl.v > 0.6 && P.type !== "putt") {
+    const kp = projicer(kl.u, kl.v), y = kp.y - 1.4 * Math.max(kp.s, 6) - 16;
+    ctx.fillStyle = "#e2b31b"; ctx.strokeStyle = "#2b2118"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(kp.x, y + 12); ctx.lineTo(kp.x - 9, y); ctx.lineTo(kp.x + 9, y); ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  // Disc'en i hånden
+  if (!flyvende && !faerdig) { ctx.fillStyle = "#e8590c"; ctx.beginPath(); ctx.ellipse(W / 2, H - 34, 36, 12, 0, 0, 7); ctx.fill(); }
+  // Vind
+  ctx.fillStyle = "rgba(255,255,255,.9)"; ctx.beginPath(); ctx.roundRect(10, 10, 132, 34, 8); ctx.fill();
+  ctx.fillStyle = "#2b2118"; ctx.font = "bold 17px system-ui"; ctx.textAlign = "left";
+  ctx.fillText(vind === 0 ? "Vindstille" : "Vind " + (vind > 0 ? "→ " : "← ") + Math.abs(vind).toLocaleString("da") + " m/s", 20, 33);
+  tegnMini(flyvende);
+}
+/* Retning og længde ud fra målerne – præcis samme regler som selve kastet */
+function vinkelFra(sF) {
+  const vf = P.type === "putt" ? Math.atan(0.45 / P.d) * 180 / Math.PI : P.T.vinkelFejl;
+  return (P.omvej || 0) + (Math.abs(sF) <= 1 ? sF * vf : Math.sign(sF) * (vf + (Math.abs(sF) - 1) * (P.type === "putt" ? vf * 1.5 : 9))) * Math.PI / 180;
+}
+function laengdeFra(kF) {
+  if (P.type === "putt") return P.d * (1 + Math.max(-0.5, Math.min(0.5, kF * 0.12)));
+  const lf = P.T.laengdeFejl;
+  return P.maalD * (1 + (Math.abs(kF) <= 1 ? kF * lf : Math.sign(kF) * (lf + (Math.abs(kF) - 1) * 0.22)));
+}
+function tegnSigte() {
+  const sF = (sigte + P.vindEffekt) / P.sigteTol;
+  const vinkel = vinkelFra(sF);
+  const maalD = P.maalD || P.d;
+  const laengde = fase === "kraft" ? laengdeFra((kraft - P.idealKraft) / P.kraftVindue) : maalD;
+  // Grønt målfelt: dér lander et kast, når begge målere er i det grønne
+  const vf = P.type === "putt" ? 0.45 : Math.tan(P.T.vinkelFejl * Math.PI / 180) * maalD;
+  const dyb = P.type === "putt" ? 0.5 : maalD * P.T.laengdeFejl;
+  ctx.fillStyle = "rgba(46,125,50,.28)"; ctx.strokeStyle = "rgba(46,125,50,.9)"; ctx.lineWidth = 2;
+  const om = P.omvej || 0;
+  ctx.beginPath();
+  for (let a = 0; a <= 6.3; a += 0.15) {
+    const lu = Math.cos(a) * vf, lv = maalD + Math.sin(a) * dyb;   // målfeltet drejes med omvejen
+    const p = projicer(lu * Math.cos(om) + lv * Math.sin(om), -lu * Math.sin(om) + lv * Math.cos(om));
+    a ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y);
+  }
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  // Sigtelinjen svinger med sigtemåleren og bliver længere med kraften
+  ctx.strokeStyle = "#e8590c"; ctx.lineWidth = 4; ctx.setLineDash([12, 9]); ctx.beginPath();
+  for (let v = 1.5; v <= laengde; v += Math.max(0.3, laengde / 40)) { const p = projicer(Math.sin(vinkel) * v, Math.cos(vinkel) * v); v === 1.5 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y); }
+  ctx.stroke(); ctx.setLineDash([]);
+  const e = projicer(Math.sin(vinkel) * laengde, Math.cos(vinkel) * laengde);
+  ctx.strokeStyle = "#b3202a"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(e.x, e.y, 9, 0, 7); ctx.moveTo(e.x - 14, e.y); ctx.lineTo(e.x + 14, e.y); ctx.moveTo(e.x, e.y - 14); ctx.lineTo(e.x, e.y + 14); ctx.stroke();
+}
+function tegnMini(fly) {
+  const mw = mini.width, mh = mini.height, sx = mw / 56, sy = mh / 104;
+  const M = p => ({ x: mw / 2 + p.x * sx, y: mh - 6 - p.y * sy });
+  mctx.fillStyle = "#cfdccf"; mctx.fillRect(0, 0, mw, mh);
+  mctx.fillStyle = "#f4f8f6"; mctx.fillRect(mw / 2 - HUL.bredde * sx, 0, HUL.bredde * 2 * sx, mh);
+  TRAEER.forEach(t => { const p = M(t); mctx.fillStyle = "#2f6b45"; mctx.beginPath(); mctx.arc(p.x, p.y, Math.max(2.5, t.r * sx), 0, 7); mctx.fill(); });
+  const k = M(HUL.kurv); mctx.fillStyle = "#e2b31b"; mctx.beginPath(); mctx.arc(k.x, k.y, 5, 0, 7); mctx.fill();
+  if (sidsteBane.length) { mctx.strokeStyle = "#e8590c"; mctx.lineWidth = 2; mctx.beginPath(); sidsteBane.forEach(b => { const p = M(b); mctx.lineTo(p.x, p.y); }); mctx.stroke(); }
+  const d = M(fly || pos); mctx.fillStyle = "#e8590c"; mctx.strokeStyle = "#fff"; mctx.lineWidth = 1.5; mctx.beginPath(); mctx.arc(d.x, d.y, 4.5, 0, 7); mctx.fill(); mctx.stroke();
+}
+
+/* ---------- FORLØB ---------- */
+function nulstil() { pos = { x: 0, y: 0 }; kast = 0; faerdig = false; sidsteBane = []; $("besked").textContent = ""; nytKast(); }
+function nytKast() {
+  cancelAnimationFrame(raf);
+  vind = Math.round((Math.random() * 2 - 1) * 2.5 * 10) / 10;
+  P = kastParametre();
+  fase = "sigte"; t0 = performance.now();
+  $("kasttype").textContent = faerdig ? "Hullet er slut" : TYPER[P.type].navn;
+  $("info").textContent = faerdig ? "" : "Kast " + (kast + 1) + " · " + (P.d < 10 ? P.d.toLocaleString("da", { maximumFractionDigits: 1 }) : Math.round(P.d)) + " m til kurven";
+  $("sigte-zone").style.left = (50 + (-P.vindEffekt - P.sigteTol) * 50) + "%";
+  $("sigte-zone").style.width = (P.sigteTol * 100) + "%";
+  $("kraft-zone").style.left = ((P.idealKraft - P.kraftVindue) * 100) + "%";
+  $("kraft-zone").style.width = (P.kraftVindue * 200) + "%";
+  $("kraft-fyld").style.width = "0%";
+  if (!faerdig && P.omvej) $("besked").textContent = "Træ i vejen – målfeltet ligger ved åbningen ved siden af.";
+  $("knap").textContent = faerdig ? "Hullet er slut" : "Sigt!";
+  $("knap").disabled = faerdig;
+  tegn();
+  if (!faerdig) loop();
+}
+function loop() {
+  const t = (performance.now() - t0) / 1000;
+  if (fase === "sigte") { sigte = Math.sin(t * (2.3 + (P.type === "drive" ? 0.6 : 0))); $("sigte-markoer").style.left = (50 + sigte * 50) + "%"; }
+  else if (fase === "kraft") { const x = (t * P.fart) % 2; kraft = x < 1 ? x : 2 - x; $("kraft-fyld").style.width = (kraft * 100) + "%"; }
+  else return;
+  tegn();   // sigtelinjen følger målerne
+  raf = requestAnimationFrame(loop);
+}
+$("knap").onclick = () => {
+  if (fase === "sigte") { fase = "kraft"; t0 = performance.now(); $("knap").textContent = P.type === "putt" ? "Put!" : "Kast!"; }
+  else if (fase === "kraft") { fase = "flyver"; cancelAnimationFrame(raf); $("knap").disabled = true; udfoer(); }
+};
+$("igen").onclick = nulstil;
+
+/* ---------- KASTET ---------- */
+function udfoer() {
+  const sFejl = (sigte + P.vindEffekt) / P.sigteTol;          // −1..1 = inden for den grønne zone
+  const kFejl = (kraft - P.idealKraft) / P.kraftVindue;
+  if (P.type === "putt") return putt(sFejl, kFejl);
+  // Inden for zonen: lille fejl. Udenfor: fejlen vokser hurtigt.
+  const vinkel = vinkelFra(sFejl);
+  const laengde = laengdeFra(kFejl);
+  const land = { u: Math.sin(vinkel) * laengde, v: Math.cos(vinkel) * laengde };
+  const top = Math.min(14, 0.12 * laengde + 1);
+  const pkt = [];
+  for (let i = 0; i <= 60; i++) { const t = i / 60, w = tilVerden(land.u * t, land.v * t); pkt.push({ ...w, z: 1.2 + top * Math.sin(Math.PI * t) - 1.2 * t }); }
+  let slutI = 60, trae = false;
+  for (let i = 3; i <= 60; i++) if (pkt[i].z < 7 && TRAEER.some(t => afst(pkt[i], t) < t.r)) { slutI = i - 1; trae = true; break; }
+  sidsteBane = pkt.slice(0, slutI + 1);
+  animer(pkt, slutI, () => landet(pkt[slutI], trae, sFejl, kFejl));
+}
+function animer(pkt, slutI, naar) {
+  const start = performance.now(), varighed = 350 + 1300 * slutI / 60;
+  const a = () => {
+    const t = Math.min(1, (performance.now() - start) / varighed), i = Math.round(t * slutI);
+    tegn(pkt[i]);
+    if (t < 1) { raf = requestAnimationFrame(a); return; }
+    naar();
+  };
+  a();
+}
+function landet(p, trae, sFejl, kFejl) {
+  kast++;
+  const fra = { ...pos };
+  if (Math.abs(p.x) > HUL.bredde || p.y > 125) { kast++; $("besked").textContent = "OB! +1 strafkast"; pos = fra; return setTimeout(nytKast, 900); }
+  pos = { x: p.x, y: p.y };
+  const d = tilKurv();
+  // Direkte i kurven fra drive/approach kræver et næsten perfekt kast
+  if (d <= 0.6) { pos = { ...HUL.kurv }; return slut(kast === 1 ? "ACE!!! 🎉🥏" : "Lige i kurven! 🎉"); }
+  $("besked").textContent = trae ? "Træ! 🌲" : (Math.abs(sFejl) <= 1 && Math.abs(kFejl) <= 1) ? "Flot kast!" : kFejl < -1 ? "For kort" : kFejl > 1 ? "For langt" : sFejl < 0 ? "Til venstre" : "Til højre";
+  setTimeout(nytKast, 900);
+}
+// Putt: ligesom putting-spillet. I kurven, hvis begge er i zonen.
+function putt(sFejl, kFejl) {
+  const ramt = Math.abs(sFejl) <= 1 && Math.abs(kFejl) <= 1;
+  const d = P.d;
+  // Hvor ender den?
+  let land;
+  if (ramt) land = { u: 0, v: d };
+  else {
+    const side = Math.max(-1, Math.min(1, sFejl / 2)) * (1 + Math.random() * 1.5);
+    const frem = kFejl < -1 ? d * (0.5 + Math.random() * 0.25) : kFejl > 1 ? d + 1 + Math.random() * 2.5 : d + (Math.random() - 0.3);
+    land = { u: side + Math.sign(sFejl) * 0.6, v: frem };
+  }
+  const pkt = [];
+  for (let i = 0; i <= 40; i++) { const t = i / 40, w = tilVerden(land.u * t, land.v * t); pkt.push({ ...w, z: (ramt ? 1.1 : 0.9) + Math.sin(Math.PI * t) * (0.4 + d * 0.05) - (ramt ? 0.1 : 0.9) * t }); }
+  sidsteBane = pkt;
+  animer(pkt, 40, () => {
+    kast++;
+    if (ramt) { pos = { ...HUL.kurv }; return slut("Kæderne synger! 🎉"); }
+    pos = { x: pkt[40].x, y: pkt[40].y };
+    const ny = tilKurv();
+    if (ny < 1.2) { kast++; pos = { ...HUL.kurv }; return slut("Forbi, men tap-in (+1 kast)."); }
+    $("besked").textContent = "Forbi! " + ny.toLocaleString("da", { maximumFractionDigits: 1 }) + " m tilbage.";
+    setTimeout(nytKast, 900);
+  });
+}
+function slut(tekst) {
+  faerdig = true;
+  const rel = kast - HUL.par;
+  const navn = kast === 1 ? "Ace" : rel <= -2 ? "Eagle" : rel === -1 ? "Birdie" : rel === 0 ? "Par" : rel === 1 ? "Bogey" : rel === 2 ? "Dobbelt bogey" : "+" + rel;
+  $("besked").textContent = tekst + " " + navn + " på " + kast + " kast.";
+  nytKast();
+}
+
+nulstil();
+</script>
+</body>
+</html>

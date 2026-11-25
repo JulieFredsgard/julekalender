@@ -66,15 +66,15 @@ const HULLER = {
   15: { navn: "Aktiekurven",         par: 4, laengde: 165, kurvX: 0,   traeer: 10, tempo: 2 },
   16: { navn: "Julefrokosten",       par: 5, laengde: 265, kurvX: 8,   traeer: 18, tempo: 1, vand: "foran" },
   17: { navn: "Kælenavnet",          par: 4, laengde: 150, kurvX: -6,  traeer: 24, tempo: 1 },
-  18: { navn: "Ni år",               par: 5, laengde: 270, kurvX: 15,  traeer: 22, tempo: 1.5, dobbelt: true,
-        hilsen: "Tillykke med os. Ni år, og jeg ville vælge dig igen.\nKærlig hilsen tullemissen" },
+  18: { navn: "Kærlighedshullet",               par: 5, laengde: 270, kurvX: 15,  traeer: 22, tempo: 1.5, dobbelt: true,
+        hilsen: "Tillykke de ni år med mig babe.\nMys tullemissen" },
   19: { navn: "Future caddie",       par: 4, laengde: 180, kurvX: -4,  traeer: 13, tempo: 1.5, vand: "side" },
   20: { navn: "Kædereaktionen",      par: 3, laengde: 55,  kurvX: -5,  traeer: 5,  tempo: 1.5 },
   21: { navn: "Juleværkstedet",      par: 5, laengde: 285, kurvX: 0,   traeer: 26, tempo: 2 },
   22: { navn: "Under træet",         par: 4, laengde: 170, kurvX: 8,   traeer: 15, tempo: 1.5, vand: "foran" },
   23: { navn: "Kernehuset",          par: 5, laengde: 290, kurvX: -10, traeer: 26, tempo: 2, vand: "side" },
   24: { navn: "Risengrøden",         par: 4, laengde: 165, kurvX: 0,   traeer: 16, tempo: 2, vand: "foran",
-        hilsen: "Glædelig jul! Fra april har du hjemmebane." }
+        hilsen: "Glædelig jul smukke!" }
 };
 
 /* ---------- 4. CADDIEOPGAVER: ÉN PR. DAG ----------
