@@ -6,8 +6,10 @@
 /* ---------- 1. INDSTILLINGER ---------- */
 const OVERSKRIFT = "Mortens Jule-Open";      // Overskriften øverst på siden
 const UNDEROVERSKRIFT = "Merry Discmas";   // Linjen i håndskrift under overskriften
-const NAVN = "Morten";              // Hans navn eller kælenavn
+const NAVN = "Morten";              // Hans navn eller kælenavn. Står under mailen
 const AFSENDER = "Julie-manden";   // Dit navn. Står i beskeden, han sender dig, når han køber noget
+const MAIL = ["julie.fredsgaard", "hotmail.com"];   // Din mail, delt i to så spamrobotter ikke finder den. Får besked om køb
+const MAIL_EMNE = "Køb i julebutikken";   // Emnefeltet i mailen
 const AAR = new Date().getFullYear();
 
 // Firebase: så point, køb og rekorder følger ham på tværs af enheder

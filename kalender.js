@@ -35,7 +35,7 @@ const BASE = DATABASE_URL.replace(/\/$/, "") + "/kalender/" + KODE + "-vinterope
 async function skriv(sti, data) {
   if (!SYNK) return;
   try {
-    await fetch(BASE + "/" + sti + ".json", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+    await fetch(BASE + "/" + sti + ".json", { method: "PATCH", keepalive: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
   } catch (e) { console.warn("Kunne ikke gemme online:", e); }
 }
 // Gem én værdi (null sletter den)
@@ -1108,13 +1108,10 @@ kortDialog.addEventListener("click", e => { if (e.target === kortDialog) kortDia
    ===================================================== */
 const butik = document.getElementById("butik");
 let bekraefter = null, ligeKoebt = null;
-async function giBesked(navn, pris, infoEl) {
-  const tekst = "🥏 Jeg har lige købt \"" + navn + "\" for " + pris + " præmiepoint i Julebutikken! Hvornår får jeg den? 😄";
-  if (navigator.share) {
-    try { await navigator.share({ text: tekst }); return; } catch (e) { if (e.name === "AbortError") return; }
-  }
-  try { await navigator.clipboard.writeText(tekst); infoEl.textContent = "Kopieret. Sæt den ind i en besked til " + AFSENDER + "."; }
-  catch { infoEl.textContent = "Send til " + AFSENDER + ": " + tekst; }
+// Åbner en færdig mail om købet i hans mailprogram. Han skal selv trykke send.
+function aabnMail(navn, pris) {
+  const tekst = ["Hej " + AFSENDER, "", "Jeg har lige købt \"" + navn + "\" for " + pris + " præmiepoint i Julebutikken. Hvornår får jeg den?", "", "Hilsen " + NAVN].join(String.fromCharCode(13, 10));
+  location.href = "mailto:" + MAIL.join("@") + "?subject=" + encodeURIComponent(MAIL_EMNE) + "&body=" + encodeURIComponent(tekst);
 }
 function tegnButik() {
   document.getElementById("butik-saldo-stor").textContent = saldo();
@@ -1123,8 +1120,7 @@ function tegnButik() {
   tillykke.hidden = !ligeKoebt;
   if (ligeKoebt) {
     const k = KUPONER.find(x => x.id === ligeKoebt);
-    const info = el("p", "lille");
-    tillykke.append(el("p", "tillykke-titel", "Tillykke! 🎉"), el("p", null, k.navn), knapEl("Send besked til " + AFSENDER, "koeb", () => giBesked(k.navn, k.pris, info)), info);
+    tillykke.append(el("p", "tillykke-titel", "Tillykke! 🎉"), el("p", null, k.navn), knapEl("Skriv til " + AFSENDER, "koeb", () => aabnMail(k.navn, k.pris)));
   }
   const liste = document.getElementById("butik-liste");
   liste.innerHTML = "";
@@ -1155,10 +1151,10 @@ function tegnButik() {
     if (kb.modtaget) li.appendChild(el("span", "kupon-pris", "Modtaget ✓"));
     else {
       li.appendChild(el("span", "kupon-pris", "På vej"));
-      const info = el("p", "lille"), kn = el("div", "kupon-knapper");
-      kn.append(knapEl("Send besked igen", "fortryd", () => giBesked(navn, kb.pris, info)),
+      const kn = el("div", "kupon-knapper");
+      kn.append(knapEl("Skriv mail igen", "fortryd", () => aabnMail(navn, kb.pris)),
         knapEl("Jeg har fået den", "fortryd", () => { gem("koeb", id, { ...kb, modtaget: true }); opdaterTop(); tegnButik(); }));
-      li.append(kn, info);
+      li.append(kn);
     }
     mine.appendChild(li);
   });
@@ -1169,6 +1165,7 @@ function koeb(kupon) {
   bekraefter = null; ligeKoebt = kupon.id;
   opdaterTop(); tegnButik();
   butik.scrollTop = 0;
+  aabnMail(kupon.navn, kupon.pris);
 }
 document.getElementById("aabn-butik").addEventListener("click", () => { bekraefter = null; ligeKoebt = null; tegnButik(); butik.showModal(); });
 document.getElementById("luk-butik").addEventListener("click", () => butik.close());
