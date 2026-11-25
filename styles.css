@@ -337,6 +337,7 @@ dialog::backdrop { background: rgba(15,38,30,.78); }
 .kupon.koebt { --kant: var(--gran-lys); }
 .koebt .kupon-pris { font-size: .95rem; font-weight: 600; color: var(--gran-lys); text-align: center; padding: 0 .4rem; }
 .kupon.indloest { opacity: .6; }
+#mine-kuponer .indloest .kupon-navn { padding-bottom: .95rem; }   /* ingen knapper under navnet, så det skal stå midt i feltet */
 .kupon .lille:empty, .tillykke .lille:empty { display: none; }
 .tom { color: var(--graa); padding: .6rem 0; }
 #mine-overskrift, #spilleder h3 { font-family: var(--display); font-weight: 600; font-size: 1.4rem; margin: 1.4rem 0 .9rem; padding-top: 1.1rem; border-top: 2px solid var(--blaek); }
