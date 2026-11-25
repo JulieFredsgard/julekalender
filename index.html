@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mortens Jule-Open</title>
 
-<!-- Skrifttyper fra Google Fonts: Fredoka (overskrifter), Rubik (tekst) og Pacifico (Merry Discmas) -->
+<!-- Skrifttyper fra Google Fonts: Barlow Condensed (overskrifter, tal og Merry Discmas) og Barlow (tekst) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Pacifico&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -16,80 +16,92 @@
 
 <!--
   Filerne i projektet:
-  - indhold.js  : ALT indhold – huller, caddie-opgaver, præmier og indstillinger. Ret her.
+  - indhold.js  : ALT indhold – huller, caddieopgaver, præmier og indstillinger. Ret her.
   - grafik.js   : tegningerne til regneopgaverne.
-  - kalender.js : logikken (banekort, hullerne, point, proshop). Behøver ikke rettes.
+  - kalender.js : logikken (banekort, hullerne, point, julebutik). Behøver ikke rettes.
   - styles.css  : udseendet.
 -->
 
-<header>
-  <div class="logo">
-    <!-- En disc med en lille julehue -->
-    <svg class="logo-disc" viewBox="0 0 64 44" aria-hidden="true">
-      <ellipse cx="32" cy="30" rx="28" ry="12" fill="#b8440a"/>
-      <ellipse cx="32" cy="26" rx="28" ry="12" fill="#e8590c"/>
-      <ellipse cx="32" cy="26" rx="17" ry="7" fill="none" stroke="#ff9e5e" stroke-width="2.5"/>
-      <path d="M22 18 Q30 -2 46 8 Q40 12 42 18 Z" fill="#b3202a"/>
-      <rect x="19" y="15.5" width="26" height="5" rx="2.5" fill="#fff"/>
-      <circle cx="47" cy="8" r="3.4" fill="#fff"/>
-    </svg>
-    <h1 id="titel">Mortens <span class="logo-open">Jule-Open</span></h1>
-    <p id="undertitel">Merry Discmas</p>
-  </div>
-  <div class="status">
-    <!-- To tal hver for sig: disc golf-scoren (lav er godt) og præmiepointene -->
-    <div class="stats">
-      <div class="stat">
-        <span class="stat-navn">Score</span>
-        <strong id="samlet-score">–</strong>
-        <span class="stat-under" id="score-under"></span>
-      </div>
-      <div class="stat">
-        <span class="stat-navn">Præmiepoint</span>
-        <strong><span id="saldo-stor">0</span><svg class="p-ikon" viewBox="0 0 20 14" aria-hidden="true"><ellipse cx="10" cy="8" rx="9.2" ry="5" fill="#b8440a"/><ellipse cx="10" cy="6.6" rx="9.2" ry="5" fill="#e8590c"/><ellipse cx="10" cy="6.6" rx="5.6" ry="2.9" fill="none" stroke="#ff9e5e" stroke-width="1.2"/></svg></strong>
-        <span class="stat-under">til Julebutikken</span>
+<div class="ramme">
+<!-- TAVLEN: navn, score, præmiepoint, butik, niveau og scorekort samlet i ét -->
+<header class="tavle">
+  <div class="tavle-top">
+    <div class="logo">
+      <!-- En disc golf-kurv, hvor kæderne danner et juletræ -->
+      <svg class="logo-maerke" viewBox="0 0 48 60" aria-hidden="true" fill="none" stroke-linecap="square">
+        <path d="M24 12V56" stroke="#c9a24b" stroke-width="2.4"/>
+        <g stroke="#f4f1e8" stroke-width="1.6"><path d="M24 14L7 40M24 14L13 40M24 14L19 40M24 14L29 40M24 14L35 40M24 14L41 40"/></g>
+        <path d="M4 40H44L41 48H7Z" fill="#c9a24b" stroke="none"/>
+        <path d="M15 57H33" stroke="#c9a24b" stroke-width="2.4"/>
+        <path d="M24 1l2.4 5.4 5.9.6-4.4 3.9 1.3 5.8L24 13.700l-5.200 3 1.300-5.800-4.400-3.900 5.900-.600z" fill="#c9a24b" stroke="none"/>
+      </svg>
+      <div>
+        <h1 id="titel">Mortens <span class="logo-open">Jule-Open</span></h1>
+        <p id="undertitel">Merry Discmas</p>
       </div>
     </div>
-    <p class="titel-linje" id="titel-navn"></p>
-    <div class="niveau-bar" aria-hidden="true"><div id="niveau-fyld"></div></div>
-    <p id="stilling"></p>
-    <ol id="niveauer" class="niveauer"></ol>
-    <button type="button" id="aabn-butik">🎁 Julebutik</button>
+
+    <div class="tal-felt">
+      <span class="felt-navn">Score</span>
+      <strong id="samlet-score">–</strong>
+      <span class="felt-under" id="score-under"></span>
+    </div>
+    <div class="tal-felt">
+      <span class="felt-navn">Præmiepoint</span>
+      <strong><span id="saldo-stor">0</span><svg class="p-ikon" viewBox="0 0 20 14" aria-hidden="true"><ellipse cx="10" cy="8.200" rx="9.200" ry="4.800" fill="#866617"/><ellipse cx="10" cy="6.400" rx="9.200" ry="4.800" fill="#c9a24b"/><ellipse cx="10" cy="6.400" rx="5.400" ry="2.600" fill="none" stroke="#f0dfae" stroke-width="1.100"/></svg></strong>
+      <span class="felt-under">til Julebutikken</span>
+    </div>
+    <button type="button" id="aabn-butik">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3.500 8.500h17v4h-17zM5 12.500h14V21H5zM12 8.500V21M12 8.500C9 8.500 6.500 7.500 6.500 5.500S9.500 3 12 8.500zM12 8.500c3 0 5.500-1 5.500-3S14.500 3 12 8.500z"/></svg>
+      <span>Julebutik</span>
+    </button>
   </div>
+
+  <!-- Niveau: fem mærker på en linje -->
+  <div class="niveau">
+    <p class="niveau-tekst"><span class="felt-navn">Niveau</span> <span id="stilling"></span></p>
+    <div class="niveau-linje">
+      <div class="niveau-spor" aria-hidden="true"><div id="niveau-fyld"></div></div>
+      <ol id="niveauer"></ol>
+    </div>
+  </div>
+
+  <!-- Scorekortet bygges af kalender.js -->
+  <div id="scorekort" class="scorekort"></div>
 </header>
 
-<!-- Scorekortet og banekortet med de 24 huller bygges af kalender.js -->
-<div id="scorekort" class="scorekort"></div>
-<div id="banekort" class="banekort"></div>
-<p class="banekort-hjaelp">Et nyt hul hver dag. Tryk på en kurv for at spille hullet.</p>
+<!-- BANEN: de 24 huller bygges af kalender.js og fylder resten af skærmen -->
+<main id="banekort" class="banekort"></main>
+</div>
 
-<section id="spilleder" class="kort" hidden></section>
+<section id="spilleder" hidden></section>
 <div id="testbanner" hidden>Testtilstand: alle huller kan spilles, og intet gemmes på hans rigtige plads.</div>
 
-<dialog id="kort">
-  <div class="kort">
-    <!-- Toppen af kortet: datoen som et lille kalenderblad ved siden af titlen -->
-    <div class="kort-hoved">
-      <div class="dato-badge" id="kort-dato" hidden></div>
-      <div class="kort-hoved-tekst">
-        <h2 id="kort-titel"></h2>
-        <p class="kort-under" id="kort-dag"></p>
-      </div>
+<dialog id="kort" aria-labelledby="kort-titel">
+  <div class="kort-hoved">
+    <div class="dato-badge" id="kort-dato" hidden></div>
+    <div class="kort-hoved-tekst">
+      <h2 id="kort-titel"></h2>
+      <p class="kort-under" id="kort-dag"></p>
     </div>
-    <div id="kort-handling"></div>
-    <button type="button" id="luk">Luk</button>
+    <button type="button" id="luk" class="luk" aria-label="Luk">×</button>
   </div>
+  <div class="kort"><div id="kort-handling"></div></div>
 </dialog>
 
-<dialog id="butik">
+<dialog id="butik" aria-labelledby="butik-titel">
+  <div class="kort-hoved">
+    <div class="kort-hoved-tekst">
+      <h2 id="butik-titel">Julebutikken</h2>
+      <p class="kort-under"><span id="butik-saldo-stor">0</span> præmiepoint at bruge</p>
+    </div>
+    <button type="button" id="luk-butik" class="luk" aria-label="Luk">×</button>
+  </div>
   <div class="kort">
-    <h2>Julebutikken</h2>
-    <p class="saldo"><strong id="butik-saldo-stor">0</strong> præmiepoint at bruge</p>
     <div id="tillykke" class="tillykke" hidden></div>
     <ul id="butik-liste" class="kuponer"></ul>
     <h3 id="mine-overskrift" hidden>Mine præmier</h3>
     <ul id="mine-kuponer" class="kuponer"></ul>
-    <button type="button" id="luk-butik">Luk</button>
   </div>
 </dialog>
 

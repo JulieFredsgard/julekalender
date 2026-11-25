@@ -1,608 +1,353 @@
 /* =====================================================
-   UDSEENDE FOR JULEKALENDEREN
+   UDSEENDE FOR MORTENS JULE-OPEN
    Filen hentes af index.html via <link rel="stylesheet">.
+   Stilen: som tavlen og kortet ved en rigtig disc golf-bane.
+   Skarpe kanter, tynde linjer og få farver.
    ===================================================== */
 
-/* ---------- FARVER ----------
-   Her samles alle farver ét sted. Skift dem, og hele siden ændrer udtryk. */
+/* ---------- FARVER OG SKRIFTTYPER ----------
+   Skift dem her, og hele siden ændrer udtryk. */
 :root {
-  --nat: #12301f;        /* mørk grøn baggrund */
-  --nat-lys: #1b4430;    /* lidt lysere grøn til felter */
-  --roed: #b3202a;       /* dørenes farve, som en klassisk julehjerte-rød */
-  --roed-moerk: #8a1620; /* kant og skygge på dørene */
-  --guld: #e8c46a;       /* tal, knopper og detaljer */
-  --papir: #fbf3e4;      /* baggrund på kortet bag lågen */
-  --tekst: #2b2118;      /* tekst på kortet */
+  --gran: #16352a;       /* mørk grangrøn: tavlen */
+  --gran-dyb: #0f261e;   /* endnu mørkere: bag dialoger */
+  --gran-lys: #2b6049;   /* knapper og løste opgaver */
+  --sne: #eef1ea;        /* kortets sne */
+  --papir: #f7f4ec;      /* scorekort og dialoger */
+  --linje: #d9d4c5;      /* tynde linjer på papir */
+  --blaek: #1b2a24;      /* tekst på papir */
+  --graa: #66736c;       /* dæmpet tekst på papir */
+  --roed: #b4232c;       /* bruges kun i scorekortet */
+  --messing: #c9a24b;    /* guld */
+  --guld-moerk: #866617; /* guld til tekst på lys baggrund */
+  --lys: #f4f1e8;        /* tekst på grønt */
+  --daempet: #a9bbb0;    /* dæmpet tekst på grønt */
+  --vaeg: #d3d0c4;       /* væggen, kalenderen hænger på (kun computer) */
 
-  /* SKRIFTTYPER
-     Fredoka: rund og legende til overskrifter og store tal (spil-følelse)
-     Rubik:   tydelig og moderne til al almindelig tekst og scorekortet
-     Pacifico: håndskrift til "Merry Discmas" (jule-følelse) */
-  --display: "Fredoka", "Rubik", system-ui, sans-serif;
-  --ui: "Rubik", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --script: "Pacifico", "Brush Script MT", cursive;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;   /* overskrifter og tal */
+  --ui: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 button, input { font-family: inherit; }
-
 body {
-  margin: 0;
-  min-height: 100vh;
-  background: var(--nat);
-  color: var(--papir);
+  margin: 0; min-height: 100vh; min-height: 100svh;
+  background: var(--gran); color: var(--blaek);
   font-family: var(--ui);
-  /* Plads til telefoners kanter og notch */
-  padding: max(1.5rem, env(safe-area-inset-top)) 1rem max(2rem, env(safe-area-inset-bottom));
 }
+h1, h2, h3, p { margin: 0; }
+:focus-visible { outline: 3px solid var(--messing); outline-offset: 2px; }
 
-/* ---------- OVERSKRIFT ---------- */
-header { text-align: center; margin: 0 auto 1.6rem; max-width: 36rem; }
-/* Logoet: "MORTEN JULE OPEN" med en disc, og "Merry Discmas" i håndskrift */
-.logo { margin: 0 0 1.2rem; }
-.logo-disc { width: 3.2rem; height: auto; display: block; margin: 0 auto .3rem; filter: drop-shadow(0 3px 0 rgba(0,0,0,.25)); }
+/* =====================================================
+   TAVLEN: navn, tal, butik, niveau og scorekort i ét
+   ===================================================== */
+/* Rammen holder tavle og bane samlet. --bredde styrer, hvor bredt det hele må være. */
+.ramme { --bredde: 62rem; display: flex; flex-direction: column; width: 100%; }
+/* Computer: en trykt kalender på en væg, altid inden for skærmens højde.
+   --l er luften mellem delene. Den følger højden, så banen får pladsen på lave skærme. */
+@media (min-width: 900px) {
+  body { background: var(--vaeg); display: grid; place-items: center; padding: 1.35rem 2rem; }
+  .ramme {
+    --l: clamp(.3rem, 2.4svh - .42rem, 1.1rem);
+    width: min(var(--bredde) + 2.4rem, 100%); height: min(100svh - 2.7rem, 58rem); min-height: 34rem;
+    padding: calc(var(--l) * .6) 1.2rem 1.2rem; background: var(--gran);
+    border: 2px solid var(--messing);
+    box-shadow: 0 0 0 .5rem var(--gran), 0 .5rem 1.6rem .5rem rgba(27,42,36,.28);
+  }
+  body.spilleder-tilstand .ramme { height: auto; min-height: 0; margin-bottom: 1.8rem; }
+}
+.tavle { flex: none; background: var(--gran); color: var(--lys); }
+/* På computer er tavlen og siden samme grønne, så alt flugter med scorekortets kanter */
+@media (min-width: 900px) {
+  .tavle .logo { padding: var(--l) 1.6rem var(--l) 0; }
+  .tavle .tal-felt { padding-top: 0; padding-bottom: 0; }
+  .tavle .niveau { padding: calc(var(--l) * .65) 0 calc(var(--l) * 1.25); }
+  .tavle .scorekort { margin-bottom: var(--l); }
+  .tavle .niveau-linje { margin-right: 2.8rem; }
+  .tavle #aabn-butik { align-self: center; padding: .85rem 1.5rem; margin-left: .6rem; }
+}
+.tavle-top { display: grid; grid-template-columns: 1fr auto auto auto; align-items: stretch; }
+
+.logo { display: flex; align-items: center; gap: 1rem; padding: 1.1rem 1.6rem; min-width: 0; }
+.logo-maerke { flex: none; width: 2.5rem; height: auto; }
 h1 {
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: clamp(2.1rem, 9vw, 3.4rem);
-  line-height: 1;
-  letter-spacing: .02em;
-  text-transform: uppercase;
-  margin: 0;
-  color: var(--guld);
-  text-shadow: 0 3px 0 #0a1f13;
+  font-family: var(--display); font-weight: 700; text-transform: uppercase;
+  font-size: clamp(1.7rem, 3vw, 2.5rem); line-height: .95; letter-spacing: .02em; white-space: nowrap;
 }
-h1 .logo-open { color: var(--papir); }
-#undertitel {
-  margin: .35rem 0 0;
-  font-family: var(--script);
-  font-size: clamp(1.4rem, 5.5vw, 1.9rem);
-  line-height: 1.2;
-  color: #f2a7a7;
-  transform: rotate(-3deg);
-}
-#undertitel::before, #undertitel::after { content: "❄"; font-family: var(--ui); font-size: .8em; color: var(--papir); opacity: .7; margin: 0 .45em; }
+h1 .logo-open { color: var(--messing); }
+#undertitel { font-family: var(--display); font-weight: 500; font-size: clamp(.9rem, 1.3vw, 1.05rem); line-height: 1.1; letter-spacing: .2em; text-transform: uppercase; color: var(--lys); margin-top: .35rem; }
 
-/* ---------- KALENDEREN ----------
-   Et gitter med 4 kolonner på mobil og 6 på større skærme. */
-#kalender {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: .7rem;
-  max-width: 52rem;
-  margin: 0 auto;
-  padding: 0;
-  list-style: none;
-}
-@media (min-width: 640px) {
-  #kalender { grid-template-columns: repeat(6, 1fr); gap: .9rem; }
-}
+.tal-felt { display: grid; align-content: center; gap: .05rem; padding: .55rem 1.1rem; min-width: 8rem; }
+.felt-navn { font-family: var(--display); font-weight: 500; font-size: .9rem; letter-spacing: .06em; color: var(--messing); text-transform: uppercase; }
+.tal-felt strong { font-family: var(--display); font-weight: 600; font-size: 2.1rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.felt-under { font-size: .8rem; color: var(--daempet); }
 
-/* ---------- EN LÅGE ---------- */
-.laage {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 3 / 4;                 /* lidt højere end bred, som en dør */
-  border: 2px solid var(--roed-moerk);
-  border-radius: 6px 6px 3px 3px;
-  background: var(--roed);
-  color: var(--guld);
-  font-family: var(--display);
-  font-size: clamp(1.4rem, 5vw, 2rem);
-  cursor: pointer;
-  transition: transform .15s;
-}
-/* Den lille guldknop på siden af lågen */
-.laage::after {
-  content: "";
-  position: absolute;
-  right: 10%; top: 50%;
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--guld);
-}
-.laage:hover:not(:disabled) { transform: translateY(-3px) rotate(-1deg); }
-.laage:focus-visible { outline: 3px solid var(--guld); outline-offset: 3px; }
-
-/* Låst låge: gråtonet og kan ikke klikkes */
-.laage:disabled {
-  background: var(--nat-lys);
-  border-color: #2a5a40;
-  box-shadow: none;
-  color: #7fa38e;
-  cursor: not-allowed;
-}
-.laage:disabled::after { background: #4d7a62; }
-
-/* Åbnet låge: viser et lille hjerte i stedet for tallet */
-.laage.aabnet { background: var(--nat-lys); border-color: var(--guld); box-shadow: none; }
-.laage.aabnet .tal { display: none; }
-.laage.aabnet::before { content: "♥"; color: var(--roed); font-size: 1.6rem; }
-
-/* Dagens låge pulserer stille, så han kan se hvilken der skal åbnes.
-   Slås fra, hvis telefonen er sat til at begrænse bevægelse. */
-.laage.i-dag:not(.aabnet) { animation: puls 2.2s ease-in-out infinite; }
-@keyframes puls {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(232,196,106,.6); }
-  50%      { box-shadow: 0 0 0 8px rgba(232,196,106,0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .laage, .laage.i-dag:not(.aabnet) { animation: none; transition: none; }
-}
-
-/* ---------- KORTET BAG LÅGEN ---------- */
-dialog {
-  border: 0;
-  border-radius: 10px;
-  padding: 0;
-  width: min(92vw, 28rem);
-  background: var(--papir);
-  color: var(--tekst);
-  box-shadow: 0 20px 60px rgba(0,0,0,.5);
-}
-dialog::backdrop { background: rgba(5, 20, 12, .8); }
-.kort { padding: 2rem 1.6rem 1.6rem; text-align: center; }
-.kort .dag { color: var(--roed); font-family: var(--display); font-size: 1rem; margin: 0; }
-.kort h2 { font-family: var(--display); font-weight: 600; font-size: 1.7rem; margin: .3rem 0 1rem; }
-/* Kortets top: kalenderblad med datoen + titel og en lille linje under */
-.kort-hoved { display: flex; align-items: center; gap: .8rem; margin-bottom: 1rem; text-align: left; }
-.kort-hoved-tekst { min-width: 0; }
-.kort .kort-hoved h2 { margin: 0; font-size: 1.55rem; line-height: 1.1; }
-.kort .kort-under { margin: .15rem 0 0; font-size: .85rem; color: #7a6a58; line-height: 1.3; }
-.dato-badge { flex: none; width: 3.1rem; border-radius: 9px; overflow: hidden; background: #fff; text-align: center; box-shadow: 0 1px 0 #e3d9c6, 0 0 0 1px #e3d9c6; display: flex; flex-direction: column-reverse; }
-.dato-md { background: var(--roed); color: #fff; font-size: .62rem; font-weight: 700; letter-spacing: .1em; padding: .12rem 0; }
-.dato-tal { font-family: var(--display); font-weight: 600; font-size: 1.45rem; line-height: 1.25; color: var(--tekst); }
-.kort p { font-family: var(--ui); font-size: 1rem; line-height: 1.5; margin: 0 0 1rem; }
-.kort img { max-width: 100%; border-radius: 6px; margin-bottom: 1rem; }
-.kort button {
-  background: var(--roed); color: var(--papir);
-  border: 0; border-radius: 6px;
-  padding: .7rem 1.5rem; font-size: 1rem; cursor: pointer;
-}
-.kort button:focus-visible { outline: 3px solid var(--guld); outline-offset: 2px; }
-
-/* Lille hint nederst, kun synlig i testtilstand */
-#testbanner {
-  max-width: 52rem; margin: 1.5rem auto 0;
-  padding: .6rem 1rem; border-radius: 6px;
-  background: var(--guld); color: var(--tekst);
-  text-align: center; font-size: .95rem;
-}
-
-/* ---------- POINT OG SPØRGSMÅL ---------- */
-#stilling { margin: .6rem 0 0; color: var(--guld); font-weight: 600; font-size: 1.1rem; }
-
-#kort-handling { margin-bottom: 1rem; }
-.kort .spoergsmaal { font-weight: 600; margin-bottom: .6rem; }
-
-/* Svarknapper. Står som .kort .valg, så de vinder over den røde Luk-knap */
-.kort .valg {
-  display: block; width: 100%;
-  margin: 0 0 .5rem;
-  background: #fff; color: var(--tekst);
-  border: 2px solid #d8cdb8; border-radius: 6px;
-  padding: .7rem 1rem; font-size: 1rem; cursor: pointer;
-}
-.kort .valg:hover:not(:disabled) { border-color: var(--roed); }
-.kort .valg.forkert { background: #f1d9d9; border-color: var(--roed); color: #7a2a2a; }
-.kort .valg.rigtig  { background: #dcefd9; border-color: #2e7d32; color: #1d4d20; }
-.kort .valg:disabled { cursor: default; }
-
-.kort .resultat { font-weight: 600; margin: 1rem 0 .8rem; }
-.kort .info { font-size: 1rem; margin: .4rem 0 .8rem; opacity: .85; }
-
-/* ---------- STATUS I TOPPEN ---------- */
-.status { margin-top: 1.2rem; }
-.titel-linje { margin: 0; font-family: var(--display); font-size: 1.5rem; color: var(--papir); }
 #aabn-butik {
-  margin-top: .9rem;
-  background: var(--guld); color: var(--tekst);
-  border: 0; border-radius: 999px;
-  padding: .6rem 1.3rem; font-size: 1rem; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: .6rem; padding: 0 1.5rem;
+  background: var(--messing); color: var(--blaek); border: 0; border-radius: 0; cursor: pointer;
+  font-family: var(--display); font-weight: 600; font-size: 1.3rem; letter-spacing: .03em;
 }
-#aabn-butik:hover { filter: brightness(1.08); }
-#aabn-butik:focus-visible { outline: 3px solid var(--papir); outline-offset: 3px; }
+#aabn-butik svg { width: 1.5rem; height: 1.5rem; }
+#aabn-butik:hover { background: #dab764; }
+#aabn-butik:focus-visible { outline-offset: -4px; }
 
-/* ---------- BILLEDGÅDE ---------- */
-.billedramme { overflow: hidden; border-radius: 6px; margin-bottom: 1rem; }
-.billedramme img { display: block; width: 100%; margin: 0; border-radius: 0; transition: transform 1.6s ease-in-out; }
+/* Niveau: en linje med fem mærker */
+.niveau { display: flex; align-items: center; gap: 1.6rem; padding: 1.05rem 1.6rem 1.4rem; }
+.niveau-tekst { flex: none; font-size: .88rem; color: var(--daempet); white-space: nowrap; }
+#stilling { margin-left: .4rem; color: var(--lys); }
+.niveau-linje { flex: 1; position: relative; height: 1.9rem; margin: 0 1.5rem; }
+.niveau-spor { position: absolute; left: 0; right: 0; top: .42rem; height: 3px; background: rgba(255,255,255,.18); }
+#niveau-fyld { height: 100%; width: 0; background: var(--messing); transition: width .6s ease; }
+#niveauer { list-style: none; margin: 0; padding: 0; }
+#niveauer li {
+  position: absolute; top: .85rem; transform: translateX(-50%); white-space: nowrap;
+  font-family: var(--display); font-weight: 500; font-size: .92rem; line-height: 1.1; color: var(--daempet);
+}
+#niveauer li::before { content: ""; position: absolute; left: 50%; top: -.68rem; width: 3px; height: .75rem; margin-left: -1.5px; background: #4b6a5c; }
+#niveauer li.naaet { color: var(--lys); }
+#niveauer li.naaet::before { background: var(--messing); }
+#niveauer li.nu { color: var(--messing); font-weight: 600; }
 
-/* ---------- EMOJI-GÅDE OG TEKSTSVAR ---------- */
-.kort .emoji { font-size: 2.6rem; line-height: 1.3; margin: .2rem 0 .8rem; }
-.tekstsvar { display: flex; gap: .5rem; margin-bottom: .4rem; }
-.tekstsvar input {
-  flex: 1; min-width: 0;
-  font-size: 1.05rem; padding: .65rem .8rem;
-  border: 2px solid #d8cdb8; border-radius: 6px; background: #fff; color: var(--tekst);
-}
-.tekstsvar input:focus { outline: none; border-color: var(--roed); }
-.tidligere-gaet { list-style: none; padding: 0; margin: 0 0 .5rem; display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center; }
-.tidligere-gaet li { background: #f1d9d9; color: #7a2a2a; border-radius: 4px; padding: .2rem .6rem; text-decoration: line-through; }
+/* ---------- SCOREKORT ---------- */
+.scorekort { background: var(--papir); color: var(--blaek); overflow-x: auto; position: relative; margin-bottom: .9rem; scrollbar-width: thin; }
+.scorekort-tabel { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .92rem; text-align: center; font-variant-numeric: tabular-nums; }
+.scorekort-tabel th { text-align: left; font-family: var(--display); font-weight: 500; padding: 0 .8rem 0 1.6rem; color: var(--graa); background: var(--papir); }
+.scorekort-tabel td { min-width: 1.7rem; height: 1.6rem; padding: 0; border-left: 1px solid var(--linje); }
+.hul-raekke td { font-family: var(--display); font-weight: 600; font-size: 1.05rem; }
+.hul-raekke td.i-dag { background: var(--roed); color: #fff; }
+.par-raekke td { color: var(--graa); }
+.score-raekke td, .score-raekke th { border-top: 1px solid var(--linje); height: 2.1rem; font-weight: 600; }
+.scorekort-tabel td.sum { min-width: 4rem; background: #ece7d9; font-weight: 700; color: var(--blaek); }
 
-/* ---------- SPIL ---------- */
-.kort .spilstatus { font-weight: 600; margin-bottom: .5rem; }
-/* Start/spil igen: grøn, så den ikke ligner den røde Luk-knap */
-.kort .start {
-  display: block; width: 100%; margin: 0 0 .8rem;
-  background: #2e7d32; color: #fff;
-  font-size: 1.1rem; font-weight: 700; padding: .85rem 1.5rem;
-  box-shadow: 0 3px 0 #1d5420;
-}
-.kort .start:hover:not(:disabled) { filter: brightness(1.1); }
-.kort .start:disabled { opacity: .5; }
+/* Birdie = cirkel, eagle/ace = fyldt cirkel, bogey = firkant, værre = fyldt firkant */
+.score { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; font-weight: 600; line-height: 1; vertical-align: middle; }
+.score.s-birdie { border: 1.5px solid var(--gran-lys); border-radius: 50%; color: var(--gran-lys); }
+.score.s-eagle, .score.s-ace { border-radius: 50%; background: var(--gran-lys); color: #fff; }
+.score.s-bogey { border: 1.5px solid var(--roed); color: var(--roed); }
+.score.s-dobbeltbogey, .score.s-vaerre { background: var(--roed); color: #fff; }
 
-/* Pointregler, pointtæller og rekorder */
-.kort .regler {
-  font-size: .95rem; background: #f3ead8; border-radius: 6px;
-  padding: .55rem .8rem; margin-bottom: .8rem;
-}
-.kort .live-point { margin: .2rem 0 .8rem; color: var(--roed); line-height: 1.2; }
-.kort .live-point strong { font-family: var(--display); font-size: 2.2rem; font-weight: 600; }
-.kort .live-point small { display: block; font-size: .85rem; color: #7a6a58; margin-top: .15rem; }
-.kort .kort-tekst { font-size: 1.02rem; }
-.kort .regel-linje { font-weight: 600; margin-bottom: .8rem; }
-.kort .lille-info { font-size: .85rem; color: #7a6a58; margin: 0 0 .6rem; }
-.kort .proeve-knap { display: block; width: 100%; margin: 0 0 .6rem; background: none; color: #2e7d32; border: 2px solid #2e7d32; font-weight: 600; }
-.kort .proeve-maerke { display: inline-block; background: #e8f2e7; color: #2e7d32; font-weight: 600; font-size: .85rem; border-radius: 999px; padding: .2rem .8rem; margin-bottom: .6rem; }
-.kort .brik.fejl { background: #f1d9d9; border-color: var(--roed); }
-.kort .rekord { font-weight: 600; color: #7a5a10; margin-bottom: .6rem; }
-.kort .ny-rekord { font-family: var(--display); font-size: 1.4rem; color: #2e7d32; margin: .2rem 0 .6rem; }
-.kort .resultat-point { font-family: var(--display); font-size: 1.6rem; font-weight: 600; color: #2e7d32; margin: 0 0 .3rem; }
-.kort .resultat p:last-child { font-weight: 400; font-size: 1rem; }
-.kort .hint-knap { background: none; color: #7a5a10; border: 2px solid #d9b65a; padding: .5rem 1rem; margin-bottom: .8rem; }
-.grafik { background: #fff; border-radius: 8px; padding: .4rem; margin: 0 0 1rem; }
-.grafik svg { display: block; width: 100%; height: auto; }
+/* =====================================================
+   BANEN: fylder resten af skærmen
+   ===================================================== */
+.banekort { position: relative; flex: 1 0 auto; width: 100%; min-height: max(30rem, 46vw); max-height: 60rem; overflow: hidden; background: var(--sne); }
+@media (min-width: 700px) { .banekort { flex: 1 1 30rem; min-height: 32.5rem; max-height: 42.5rem; } }
+@media (min-width: 900px) { .banekort { flex: 1 1 0; min-height: 0; max-height: none; } }
+.banekort-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
-/* Snefnug */
-.snebane {
-  position: relative; height: 320px; overflow: hidden;
-  border-radius: 8px; margin-bottom: 1rem;
-  background: linear-gradient(var(--nat), var(--nat-lys));
-  touch-action: manipulation;
-}
-.kort .fnug {
-  position: absolute; top: -3rem;
-  background: none; padding: .3rem; color: #fff;
-  line-height: 1; border-radius: 50%;
-  animation: fald linear forwards;
-}
-@keyframes fald { to { transform: translateY(380px) rotate(200deg); } }
+.lys-paere { fill: #f2bd3f; stroke: #866617; stroke-width: .5; }
+.lys-skaer { fill: #f5c650; opacity: .32; animation: glimt 3.6s ease-in-out infinite; }
+.lys-skaer.l1 { animation-delay: -1.2s; }
+.lys-skaer.l2 { animation-delay: -2.4s; }
+@keyframes glimt { 0%, 100% { opacity: .2; } 50% { opacity: .45; } }
 
-/* Vendespil */
-.vendebord { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; margin-bottom: 1rem; }
-.kort .brik {
-  aspect-ratio: 1; padding: 0;
-  background: var(--roed); border: 2px solid var(--roed-moerk);
-  font-size: 1.8rem; display: grid; place-items: center; overflow: hidden;
+.kurv-knap {
+  position: absolute; transform: translate(-50%, -94%); padding: 0; border: 0; background: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; transition: transform .15s;
 }
-.kort .brik.vendt { background: #fff; border-color: #d8cdb8; }
-.kort .brik.fundet { background: #dcefd9; border-color: #2e7d32; }
-.kort .brik img { width: 100%; height: 100%; object-fit: cover; margin: 0; border-radius: 0; }
+.kurv-knap svg { display: block; width: 100%; height: auto; overflow: visible; }
+.k-skygge { fill: rgba(27,42,36,.15); }
+.k-sne { fill: #fff; }
+.k-stang { stroke: #58655e; stroke-width: 2.6; }
+.k-kaeder { stroke: #8b9790; stroke-width: 1; fill: none; }
+.k-kaeder-ind { stroke: #b3bcb6; stroke-width: .9; fill: none; }
+.k-net { stroke: #6f7b75; stroke-width: 1; fill: none; }
+.k-kant { stroke: #58655e; stroke-width: 1.8; fill: none; }
+.k-disc { fill: #c9a24b; stroke: #866617; stroke-width: 1; display: none; }
+.k-baand { fill: var(--gran); }
+.k-hjerte { fill: var(--messing); }
+.k-tal { font-family: var(--display); font-weight: 700; font-size: 23px; fill: var(--gran); stroke: var(--sne); stroke-width: 4px; paint-order: stroke; stroke-linejoin: round; }
+/* Spillet: guld og en disc i kurven. Tallet er en mørkere guld, så det kan læses. */
+.kurv-knap.spillet .k-baand { fill: var(--messing); } .kurv-knap.spillet .k-tal { fill: var(--guld-moerk); }
+.kurv-knap.spillet .k-disc { display: inline; }
+/* Låst: gråt bånd */
+.kurv-knap.laast { cursor: default; }
+.kurv-knap.laast .k-baand { fill: #a3b0a8; }
+.kurv-knap.laast .k-tal { fill: #68776f; }
+.kurv-knap.laast .k-stang, .kurv-knap.laast .k-kant { stroke: #75837b; }
+.kurv-knap.laast .k-net, .kurv-knap.laast .k-kaeder { stroke: #909d95; }
+.kurv-knap:hover:not(:disabled) { transform: translate(-50%, -100%); z-index: 2; }
+.kurv-knap.i-dag { z-index: 2; }
+.kurv-knap.i-dag:not(.spillet) .k-baand { fill: var(--messing); }
+.kurv-knap.i-dag::after {
+  content: "I dag"; position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); margin-bottom: 7px;
+  font-family: var(--display); font-weight: 600; font-size: 1rem; line-height: 1; white-space: nowrap; color: var(--blaek); background: var(--messing); padding: .16rem .4rem .2rem;
+}
+.kurv-knap.i-dag:not(.spillet) svg { animation: loeft 1.8s ease-in-out infinite; }
+@keyframes loeft { 0%, 100% { transform: none; } 50% { transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .lys-skaer, .kurv-knap, .kurv-knap svg, #niveau-fyld { animation: none !important; transition: none; } }
 
-/* Wordle */
-.wordle {
-  display: grid; grid-template-columns: repeat(var(--l, 5), 1fr);
-  gap: .35rem; max-width: 16rem; margin: 0 auto 1rem;
-}
-.wordle .felt {
-  aspect-ratio: 1; display: grid; place-items: center;
-  border: 2px solid #d8cdb8; border-radius: 4px; background: #fff;
-  font-weight: 700; font-size: 1.3rem; text-transform: uppercase;
-}
-.wordle .felt.rigtig  { background: #2e7d32; border-color: #2e7d32; color: #fff; }
-.wordle .felt.findes  { background: #d9a520; border-color: #d9a520; color: #fff; }
-.wordle .felt.forkert { background: #8c8478; border-color: #8c8478; color: #fff; }
+#testbanner { position: fixed; left: 0; bottom: 0; z-index: 3; padding: .35rem .8rem; background: var(--messing); color: var(--blaek); font-size: .82rem; font-weight: 500; }
 
-/* ---------- JULEBUTIKKEN ---------- */
-#butik h3 { font-family: var(--display); font-weight: 600; margin: 1.4rem 0 .6rem; }
-.kort .saldo { margin-bottom: .3rem; }
-.kort .lille { font-size: .9rem; opacity: .75; }
-.kuponer { list-style: none; padding: 0; margin: 0 0 1rem; text-align: left; }
-.kupon {
-  display: grid; grid-template-columns: 1fr auto; gap: .3rem .8rem; align-items: center;
-  border: 2px dashed #d8cdb8; border-radius: 8px; background: #fff;
-  padding: .8rem 1rem; margin-bottom: .6rem;
+/* ---------- TAVLEN PÅ SMALLE SKÆRME ---------- */
+@media (max-width: 899px) {
+  .tavle-top { grid-template-columns: 1fr 1fr auto; }
+  .logo { grid-column: 1 / -1; padding: .9rem 1rem .5rem; gap: .7rem; }
+  .logo-maerke { width: 2rem; }
+  .tal-felt { min-width: 0; padding: .65rem 1rem; }
+  .tal-felt strong { font-size: 1.8rem; }
+  #aabn-butik { padding: 0 1.1rem; font-size: 1.15rem; gap: .4rem; }
+  .niveau { display: block; padding: .8rem 1rem 1.15rem; }
+  .niveau-linje { margin: .4rem 1.4rem 0 1.1rem; }
+  .niveau-linje { margin-right: 2.2rem; }
+  #niveauer li { font-size: .84rem; }
+  /* Scorekortet kan trækkes til siden; navn og total bliver stående */
+  .scorekort-tabel th { position: sticky; left: 0; z-index: 1; padding: 0 .6rem 0 1rem; border-right: 1px solid var(--linje); }
+  .scorekort-tabel td { min-width: 2.1rem; }
+  .scorekort-tabel td.sum { position: sticky; right: 0; min-width: 3.2rem; }
+  .scorekort { scrollbar-width: none; }
+  .scorekort::-webkit-scrollbar { display: none; }
+  .banekort { flex: none; height: calc(max(36rem, 165vw) + 40px); min-height: 0; max-height: none; }
 }
-.kupon-navn { font-family: var(--ui); font-size: 1.05rem; }
-.kupon-pris { font-weight: 600; color: var(--roed); white-space: nowrap; }
-.kupon-knapper, .kupon > button { grid-column: 1 / -1; display: flex; gap: .5rem; flex-wrap: wrap; }
-.kort .kupon button { padding: .5rem 1rem; font-size: .95rem; }
-.kort .kupon button:disabled { background: #cfc6b6; color: #6b6255; cursor: not-allowed; }
-.kort .kupon .fortryd { background: none; color: var(--tekst); border: 2px solid #d8cdb8; }
-.kupon.koebt { border-style: solid; border-color: var(--guld); }
-.kupon.indloest { opacity: .6; }
-.kuponer .tom { text-align: center; opacity: .75; }
-.kupon .lille { grid-column: 1 / -1; margin: 0; font-size: .85rem; }
-.tillykke {
-  background: #dcefd9; border: 2px solid #2e7d32; border-radius: 8px;
-  padding: 1rem; margin: 0 0 1rem;
-}
-.kort .tillykke-titel { font-family: var(--display); font-size: 1.4rem; margin: 0 0 .3rem; }
-.tillykke p { margin-bottom: .6rem; }
+@media (min-width: 700px) and (max-width: 899px) { .banekort { flex: 1 1 60vw; height: auto; min-height: 70vw; } .scorekort-tabel td { min-width: 1.55rem; } }
 
-/* ---------- REGNEOPGAVER ---------- */
-.kort .regne { font-weight: 400; text-align: left; background: #fff; border-left: 4px solid var(--guld); padding: .8rem 1rem; border-radius: 4px; }
-.kort .hint { font-size: .95rem; color: #7a5a10; margin: .3rem 0; }
-.kort .forklaring { font-size: .95rem; text-align: left; background: #efe6d3; padding: .7rem .9rem; border-radius: 6px; }
+/* =====================================================
+   DIALOGER: dagens hul og julebutikken
+   ===================================================== */
+dialog { border: 0; border-radius: 2px; padding: 0; width: min(94vw, 31rem); max-height: 94vh; max-height: 94dvh; background: var(--papir); color: var(--blaek); box-shadow: 0 24px 70px rgba(0,0,0,.45); }
+dialog::backdrop { background: rgba(15,38,30,.78); }
+.kort-hoved { position: sticky; top: 0; z-index: 2; display: flex; align-items: stretch; background: var(--gran); color: var(--lys); }
+.dato-badge { flex: none; display: grid; align-content: center; justify-items: center; width: 4.2rem; padding: .5rem 0; background: var(--messing); color: var(--blaek); font-family: var(--display); }
+.dato-tal { font-weight: 600; font-size: 2rem; line-height: .95; }
+.dato-md { font-weight: 500; font-size: .9rem; letter-spacing: .08em; line-height: 1.1; }
+.kort-hoved-tekst { flex: 1; min-width: 0; padding: .8rem 1.2rem; align-self: center; }
+.kort-hoved h2 { font-family: var(--display); font-weight: 600; font-size: 1.75rem; line-height: 1.05; }
+.kort-under { font-size: .9rem; color: var(--daempet); margin-top: .1rem; }
+.luk { flex: none; width: 3.4rem; border: 0; background: none; color: var(--lys); font-size: 1.9rem; line-height: 1; cursor: pointer; }
+.luk:hover { background: rgba(255,255,255,.1); }
+.luk:focus-visible { outline-offset: -4px; }
+.kort { padding: 1.3rem 1.4rem 1.5rem; }
+.kort p { font-size: 1rem; line-height: 1.5; }
 
-/* ---------- DISC GOLF ---------- */
-.discbane {
-  position: relative; height: 300px; overflow: hidden;
-  border-radius: 8px; margin-bottom: .8rem;
-  background: linear-gradient(#cfe3ef 0%, #e9f2f6 42%, #f4f7f4 43%, #dfe9e0 100%);
+/* Knapper */
+.kort button {
+  border-radius: 2px; border: 1.5px solid var(--gran); background: none; color: var(--gran);
+  padding: .65rem 1.2rem; font-size: 1rem; font-weight: 600; cursor: pointer;
 }
-.kurv { position: absolute; left: 50%; width: 70px; height: 150px; transform-origin: 50% 0; }
-.kurv-top { position: absolute; left: 5px; right: 5px; top: 0; height: 10px; background: #e2b31b; border-radius: 4px; border: 2px solid #9a7a10; }
-.kaeder {
-  position: absolute; left: 10px; right: 10px; top: 10px; height: 46px;
-  background: repeating-linear-gradient(90deg, #8e959b 0 2px, transparent 2px 7px);
-}
-.kurv-bund { position: absolute; left: 0; right: 0; top: 54px; height: 22px; background: #e2b31b; border-radius: 0 0 14px 14px; border: 2px solid #9a7a10; }
-.kurv-stang { position: absolute; left: 50%; width: 5px; top: 0; height: 150px; margin-left: -2.5px; background: #6d7378; z-index: -1; }
-.kurv.ryst .kaeder { animation: ryst .5s ease-in-out; }
-@keyframes ryst { 0%,100% { transform: none; } 20% { transform: translateX(-3px); } 40% { transform: translateX(3px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(2px); } }
-.disc {
-  position: absolute; left: calc(50% - 22px); bottom: 20px;
-  width: 44px; height: 16px; border-radius: 50%;
-  background: radial-gradient(ellipse at 40% 35%, #ff9e5e, #e8590c);
-  border: 2px solid #b8440a;
-}
-.vind { position: absolute; left: .6rem; top: .5rem; font-size: .9rem; font-weight: 600; color: #2b4a5c; }
-.discbane .besked {
-  position: absolute; left: 0; right: 0; bottom: 3.2rem;
-  font-family: var(--display); font-size: 1.3rem; color: var(--tekst);
-}
-.maalere { display: grid; gap: .5rem; margin-bottom: .8rem; }
-.maaler { display: grid; grid-template-columns: 3.5rem 1fr; align-items: center; gap: .5rem; text-align: left; font-size: .9rem; font-weight: 600; }
-.spor { position: relative; height: 18px; background: #e8dfcd; border-radius: 9px; overflow: hidden; }
-.spor .zone { position: absolute; top: 0; bottom: 0; background: #9ccc9a; }
-.spor .markoer { position: absolute; top: -2px; bottom: -2px; width: 4px; margin-left: -2px; background: var(--roed); }
-.spor .fyld { position: absolute; left: 0; top: 7px; height: 4px; background: var(--roed); }
-.spor .fyld::after { content: ""; position: absolute; right: -2px; top: -9px; width: 4px; height: 22px; background: var(--roed); }
+.kort button:hover:not(:disabled) { background: #e6ebe3; }
+.kort button:disabled { opacity: .5; cursor: default; }
+.kort .start, .kort .svar-knap, .kort .koeb { background: var(--gran); color: #fff; }
+.kort .start:hover:not(:disabled), .kort .svar-knap:hover, .kort .koeb:hover:not(:disabled) { background: var(--gran-lys); }
+.kort .start, .kort .proeve-knap { display: block; width: 100%; margin: 0 0 .6rem; }
+.kort .start { font-size: 1.1rem; padding: .8rem 1.2rem; }
 
-/* ---------- PRINT-TÅRNET ---------- */
-.printer {
-  position: relative; height: 320px; overflow: hidden;
-  border-radius: 8px; margin-bottom: .8rem;
-  background: linear-gradient(#2a2f33, #1c2023);
-  touch-action: manipulation; cursor: pointer;
-}
-.stak { position: absolute; inset: 0; bottom: 10px; transition: transform .25s; }
-.lag { position: absolute; background: var(--farve); border-top: 1px solid rgba(255,255,255,.35); border-bottom: 1px solid rgba(0,0,0,.25); }
-.lag.plade { background: #6d7378; }
-.lag.perfekt { box-shadow: 0 0 8px var(--farve); }
-.lag.falder { animation: falder .8s ease-in forwards; }
-@keyframes falder { to { transform: translateY(260px) rotate(25deg); opacity: 0; } }
-.lag.aktiv { box-shadow: 0 0 6px #ffb37a; }
-/* Dysen sidder lige over det øverste lag og kører på en skinne */
-.skinne { position: absolute; left: 0; right: 0; height: 5px; background: #4a5156; border-radius: 3px; }
-.dyse { position: absolute; width: 26px; height: 32px; margin-left: -13px; }
-.dyse-krop { position: absolute; left: 0; right: 0; top: 0; height: 22px; background: linear-gradient(#c3c8cb, #80878c); border-radius: 3px; }
-.dyse-spids { position: absolute; left: 8px; right: 8px; top: 22px; height: 10px; background: #d9a520; clip-path: polygon(0 0, 100% 0, 60% 100%, 40% 100%); }
-.kort .fnug.guld { text-shadow: 0 0 8px #ffd54a; }
+.kort .lille-info { font-size: .9rem; color: var(--graa); margin-bottom: .6rem; }
+.kort .info { margin: .5rem 0; font-weight: 500; }
+.kort .lille { font-size: .9rem; color: var(--graa); }
 
-/* ---------- NIVEAU-BAR ---------- */
-.titel-linje { margin-bottom: .5rem; }
-.niveau-bar { height: 12px; max-width: 22rem; margin: 0 auto; background: var(--nat-lys); border-radius: 6px; overflow: hidden; border: 1px solid #2a5a40; }
-#niveau-fyld { height: 100%; width: 0; background: linear-gradient(90deg, #d9a520, var(--guld)); border-radius: 6px; transition: width .6s ease; }
-#stilling { font-size: .95rem; font-weight: 600; margin: .45rem 0 .4rem; }
-.niveauer { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem .9rem; font-size: .82rem; }
-.niveauer li { color: #7fa38e; }
-.niveauer li.naaet { color: var(--guld); font-weight: 600; }
-.niveauer li.naaet::before { content: "★ "; }
-
-/* ---------- LAYOUT: SPILLEHAL + KALENDER ----------
-   Mobil: Spillehallen som en vandret række over lågerne. Bred skærm: i siden. */
-.indhold { max-width: 52rem; margin: 0 auto; display: grid; gap: 1.2rem; }
-.indhold #kalender { margin: 0; width: 100%; max-width: none; }
-@media (min-width: 980px) {
-  .indhold { max-width: 68rem; grid-template-columns: 14rem 1fr; align-items: start; }
-  .spillehal { position: sticky; top: 1rem; }
-}
-.spillehal { background: var(--nat-lys); border: 1px solid #2a5a40; border-radius: 10px; padding: .8rem; }
-.spillehal h2 { font-family: var(--display); font-weight: 600; color: var(--guld); font-size: 1.15rem; margin: 0 0 .6rem; }
-#spillehal-liste { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; }
-@media (min-width: 980px) { #spillehal-liste { grid-template-columns: 1fr; } }
-.spil-kort {
-  width: 100%; display: grid; gap: .1rem; justify-items: center; text-align: center;
-  background: var(--nat); color: var(--papir); border: 1px solid var(--guld); border-radius: 8px;
-  padding: .55rem .3rem; cursor: pointer; font: inherit;
-}
-@media (min-width: 980px) {
-  .spil-kort { grid-template-columns: auto 1fr; justify-items: start; text-align: left; column-gap: .6rem; padding: .6rem .7rem; }
-  .spil-kort .spil-ikon { grid-row: span 2; }
-}
-.spil-kort:hover:not(:disabled) { background: #0d2417; }
-.spil-kort:focus-visible { outline: 3px solid var(--guld); outline-offset: 2px; }
-.spil-kort.laast { border-color: #2a5a40; color: #7fa38e; cursor: not-allowed; }
-.spil-ikon { font-size: 1.5rem; line-height: 1; }
-.spil-navn { font-weight: 600; font-size: .85rem; }
-.spil-rekord { font-size: .75rem; color: var(--guld); }
-.spil-kort.laast .spil-rekord { color: #7fa38e; }
-
-/* ---------- VINTER-OPEN: BANEKORTET ---------- */
-.samlet-score { font-family: var(--display); font-size: 1.15rem; color: var(--papir); margin: 0 0 .3rem; opacity: .9; }
-.banekort {
-  position: relative; width: 100%; max-width: 34rem; margin: 0 auto;
-  aspect-ratio: 400 / 550;
-  background: radial-gradient(ellipse at 50% 30%, #1f5137, var(--nat) 75%);
-  border: 1px solid #2a5a40; border-radius: 14px; overflow: hidden;
-}
-.banekort-bg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.banekort-hjaelp { text-align: center; font-size: .85rem; opacity: .7; margin: .7rem 0 0; }
-.hul-knap {
-  position: absolute; transform: translate(-50%, -50%);
-  width: clamp(46px, 13%, 64px); aspect-ratio: 1; border-radius: 50%;
-  display: grid; place-content: center; gap: 0; line-height: 1.05;
-  background: var(--papir); color: var(--tekst);
-  border: 3px solid var(--guld); cursor: pointer; font: inherit; padding: 0;
-  box-shadow: 0 3px 0 rgba(0,0,0,.35);
-}
-.hul-knap:hover:not(:disabled) { transform: translate(-50%, -52%); }
-.hul-knap:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
-.hul-nr { font-family: var(--display); font-size: 1.15rem; }
-.hul-par { font-size: .62rem; color: #7a6a58; }
-.hul-score { font-size: .72rem; font-weight: 700; }
-.hul-knap.laast { background: var(--nat-lys); color: #7fa38e; border-color: #2a5a40; box-shadow: none; cursor: not-allowed; }
-.hul-knap.laast .hul-par { color: #5f8a72; }
-.hul-knap.i-dag:not(.spillet) { animation: puls 2.2s ease-in-out infinite; border-color: #fff; }
-/* Scorekort-symboler: cirkel = under par, firkant = over par */
-.hul-knap.spillet { background: #fff; }
-.hul-knap.s-ace, .hul-knap.s-eagle { border-color: #2e7d32; box-shadow: 0 0 0 4px #fff, 0 0 0 7px #2e7d32; }
-.hul-knap.s-birdie { border-color: #2e7d32; border-width: 4px; }
-.hul-knap.s-par { border-color: #9aa0a5; }
-.hul-knap.s-bogey, .hul-knap.s-dobbeltbogey, .hul-knap.s-vaerre { border-radius: 10px; border-color: var(--roed); }
-.hul-knap.s-dobbeltbogey, .hul-knap.s-vaerre { box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--roed); }
-
-/* ---------- SCOREKORT (som på UDisc) ---------- */
-/* Hvidt kort med mørkegrøn hul-række, som et rigtigt scorekort */
-.scorekort {
-  max-width: 34rem; margin: 0 auto 1rem; background: #fff; color: var(--tekst);
-  border-radius: 14px; padding: .55rem; display: grid; gap: .45rem;
-}
-.scorekort-tabel { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: .8rem; text-align: center; font-variant-numeric: tabular-nums; border-radius: 8px; overflow: hidden; }
-.scorekort-tabel th { width: 3.1rem; text-align: left; font-weight: 600; padding: .3rem .4rem; color: #6b7d72; font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; }
-.scorekort-tabel td { padding: .25rem 0; border-left: 1px solid #eef2ef; }
-.scorekort-tabel .hul-raekke th, .scorekort-tabel .hul-raekke td { background: var(--nat-lys); color: #fff; font-weight: 600; border-left-color: rgba(255,255,255,.08); }
-.scorekort-tabel .hul-raekke td.i-dag { background: var(--guld); color: var(--tekst); }
-.scorekort-tabel .par-raekke td, .scorekort-tabel .par-raekke th { background: #f4f7f5; color: #6b7d72; }
-.scorekort-tabel .score-raekke td { height: 2rem; font-weight: 600; }
-.scorekort-tabel td.sum { font-weight: 700; width: 2.6rem; }
-.scorekort-tabel .hul-raekke td.sum { background: var(--nat); color: var(--guld); font-size: .68rem; text-transform: uppercase; letter-spacing: .03em; }
-.scorekort-tabel .par-raekke td.sum, .scorekort-tabel .score-raekke td.sum { background: #fbf3e0; color: var(--tekst); }
-.scorekort-tabel .score { display: inline-grid; place-items: center; width: 1.45rem; height: 1.45rem; font-weight: 700; }
-/* Birdie = cirkel, eagle/ace = dobbelt cirkel, bogey = firkant, dobbelt bogey = dobbelt firkant */
-.score.s-birdie { border: 2px solid #2e7d32; border-radius: 50%; color: #2e7d32; }
-.score.s-eagle, .score.s-ace { border: 2px solid #2e7d32; border-radius: 50%; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2e7d32; color: #fff; background: #2e7d32; }
-.score.s-bogey { border: 2px solid var(--roed); color: var(--roed); }
-.score.s-dobbeltbogey, .score.s-vaerre { border: 2px solid var(--roed); box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--roed); color: #fff; background: var(--roed); }
-
-@media (max-width: 480px) {
-  .scorekort-tabel { font-size: .7rem; }
-  .scorekort-tabel th { width: 2.4rem; font-size: .65rem; padding: .2rem; }
-  .scorekort-tabel td.sum { width: 2.2rem; }
-  .scorekort-tabel .hul-raekke td.sum { font-size: .52rem; letter-spacing: 0; }
-  .scorekort-tabel th { letter-spacing: 0; font-size: .58rem; }
-  .scorekort-tabel .score { width: 1.1rem; height: 1.1rem; border-width: 1.5px !important; }
-  .score.s-eagle, .score.s-ace, .score.s-dobbeltbogey, .score.s-vaerre { box-shadow: none !important; }
-}
-
-/* ---------- TOPPEN: SCORE OG PRÆMIEPENGE ---------- */
-.stats { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; max-width: 22rem; margin: 0 auto 1rem; }
-.stat { background: rgba(255,255,255,.08); border: 1px solid rgba(232,196,106,.35); border-radius: 12px; padding: .6rem .5rem; display: grid; gap: .1rem; }
-.stat-navn { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--guld); }
-.stat strong { font-family: var(--display); font-weight: 600; font-size: 2rem; line-height: 1.1; color: var(--papir); }
-.stat-under { font-size: .78rem; opacity: .75; }
-
-/* Hullets score mod par og præmien */
-.rel-score { font-weight: 700; font-size: .95rem; padding: .1rem .5rem; border-radius: 999px; }
-.rel-score.under { background: #dcefd9; color: #1d4d20; }
-.rel-score.lige { background: #ece3d1; color: #5a4e40; }
-.rel-score.over { background: #f1d9d9; color: #7a2a2a; }
-.praemie-navn { font-size: .8rem; font-weight: 700; color: #7a6a58; text-transform: uppercase; letter-spacing: .05em; margin-right: .4rem; vertical-align: .2em; }
-.live-point .praemie-navn { color: #7a6a58; }
-
-/* ---------- POINTSYMBOL ---------- */
-.p-ikon { width: 1.25em; height: .9em; vertical-align: -.1em; margin-left: .2em; }
-.point-tal { white-space: nowrap; font-weight: 700; }
-.point-tal.stor { font-family: var(--display); font-weight: 600; font-size: 1.6rem; color: #2e7d32; }
-.point-bar { height: 8px; background: #ece3d1; border-radius: 4px; overflow: hidden; }
-.point-bar > div { height: 100%; background: linear-gradient(90deg, #e8590c, #f3a15f); border-radius: 4px; transition: width .5s; }
-#aabn-butik .p-ikon { margin-left: .3em; }
+/* ---------- POINT ---------- */
+.p-ikon { width: 1.15em; height: .8em; vertical-align: -.02em; margin-left: .22em; }
+.tal-felt .p-ikon { width: 1.5rem; height: 1.05rem; vertical-align: .1rem; }
+.point-tal { white-space: nowrap; font-family: var(--display); font-weight: 600; font-variant-numeric: tabular-nums; }
+.point-tal.stor { font-size: 1.5rem; line-height: 1; }
+.praemie-navn { font-size: .95rem; color: var(--graa); margin-right: .5rem; }
+.kort .point-linje-tal { line-height: 1.2; }
+.kort .point-linje + button { margin-top: .9rem; }
+.kort .live-point { margin: .2rem 0 1rem; }
+.kort .live-point strong { font-family: var(--display); font-weight: 600; font-size: 2.2rem; line-height: 1; }
+.kort .live-point small { display: block; font-size: .9rem; color: var(--graa); }
 
 /* ---------- DAGENS SIDE ---------- */
-.kort .dag-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; background: #fff; border-radius: 12px; padding: .8rem 1rem; margin-bottom: .9rem; text-align: left; }
-.kort .dag-top.alt-loest { background: #e8f2e7; }
-.dag-top-venstre { display: grid; gap: .2rem; }
-.dag-top-navn { font-weight: 600; color: #7a6a58; font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; }
-.kort .dag-status { font-size: .9rem; font-weight: 600; }
-.alt-loest .dag-status { color: #2e7d32; }
-.kort .dag-point { display: flex; align-items: center; gap: .1rem; line-height: 1; }
-.kort .dag-point strong { font-family: var(--display); font-weight: 600; font-size: 2.2rem; color: var(--tekst); }
-.kort .dag-point .p-ikon { width: 1.9rem; height: 1.35rem; vertical-align: middle; }
-
-.opgaver { display: grid; gap: .8rem; margin-bottom: .8rem; }
-.opgave { background: #fff; border: 2px solid #e3d9c6; border-radius: 12px; text-align: left; display: flex; flex-direction: column; overflow: hidden; }
-.opgave.loest { border-color: #9ccc9a; }
-.opgave.igang { border-color: #f0b27a; }
-.opgave-hoved { display: flex; align-items: center; gap: .6rem; padding: .7rem .8rem; background: #faf5ea; }
-.opgave.loest .opgave-hoved { background: #e8f2e7; }
-.opgave-nr { flex: none; width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center; background: var(--tekst); color: #fff; font-weight: 700; }
-.opgave.loest .opgave-nr { background: #2e7d32; }
+.dag-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-bottom: 1rem; border-bottom: 2px solid var(--blaek); }
+.dag-top-venstre { display: grid; }
+.dag-top-navn { font-weight: 600; }
+.dag-status { font-size: .9rem; color: var(--graa); }
+.alt-loest .dag-status { color: var(--gran-lys); font-weight: 600; }
+.dag-point { display: flex; align-items: center; line-height: 1; }
+.dag-point strong { font-family: var(--display); font-weight: 600; font-size: 2.6rem; }
+.dag-point .p-ikon { width: 1.9rem; height: 1.33rem; }
+.opgave { padding: 1.1rem 0; border-bottom: 1px solid var(--linje); }
+.opgave:last-child { border-bottom: 0; padding-bottom: 0; }
+.opgave-hoved { display: flex; align-items: center; gap: .9rem; }
+.opgave-nr { flex: none; width: 2.2rem; height: 2.2rem; display: grid; place-items: center; border: 1.5px solid var(--blaek); font-family: var(--display); font-weight: 600; font-size: 1.35rem; line-height: 1; }
+.opgave.loest .opgave-nr { background: var(--gran-lys); border-color: var(--gran-lys); color: #fff; }
+.opgave.igang .opgave-nr { border-color: var(--guld-moerk); color: var(--guld-moerk); }
 .opgave-navn { flex: 1; min-width: 0; }
-.kort .opgave-navn h3 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 1.1rem; }
-.opgave-under { font-size: .8rem; color: #7a6a58; }
-.opgave-chip { flex: none; font-size: .72rem; font-weight: 700; padding: .25rem .55rem; border-radius: 999px; background: #ece3d1; color: #7a6a58; }
-.opgave-chip.loest { background: #2e7d32; color: #fff; }
-.opgave-chip.igang { background: #f0b27a; color: #5a2f0a; }
-.kort .stor-chip { display: inline-block; font-size: .85rem; margin: 0 0 .8rem; }
-.opgave-krop { padding: .8rem; display: flex; flex-direction: column; gap: .5rem; flex: 1; }
-.opgave-krop > button { margin-top: auto !important; }
-.kort .opgave-tekst { margin: 0; font-size: .95rem; }
-.kort .point-skala { margin: 0; display: flex; flex-wrap: wrap; gap: .3rem; font-size: .75rem; }
-.point-skala span { background: #f3ead8; border-radius: 4px; padding: .1rem .4rem; }
-.opgave-resultat { display: flex; align-items: center; gap: .6rem; }
-.score.stor { display: inline-grid; place-items: center; width: 2.2rem; height: 2.2rem; font-weight: 700; font-size: 1.1rem; }
-.score.stor.s-par { border: 2px solid #c9c1b2; border-radius: 4px; }
-.opgave-score-navn { font-family: var(--display); font-size: 1.3rem; }
-.point-linje { display: grid; gap: .3rem; }
-.kort .point-linje-tal { margin: 0; }
-.af-maks { color: #7a6a58; font-size: .9rem; }
-.kort .point-linje + button { margin-top: .9rem; }
-.kort .opgave-krop .point-linje + button { margin-top: .4rem; }
-.kort .svar-boks { background: #e8f2e7; color: #1d4d20; font-weight: 700; border-radius: 8px; padding: .6rem .8rem; }
+.opgave-navn h3 { font-family: var(--display); font-weight: 600; font-size: 1.4rem; line-height: 1.1; }
+.opgave-under { font-size: .9rem; color: var(--graa); }
+.kort .hilsen { margin-top: 1.1rem; padding: 1rem 1.2rem; background: var(--gran); color: var(--lys); font-family: var(--display); font-weight: 500; font-size: 1.35rem; line-height: 1.25; white-space: pre-line; }
+.opgave-chip { flex: none; font-size: .9rem; font-weight: 600; color: var(--graa); }
+.opgave-chip.loest { color: var(--gran-lys); }
+.opgave-chip.igang { color: var(--guld-moerk); }
+.kort .stor-chip { font-size: 1rem; margin-bottom: .8rem; }
+.opgave-krop { display: grid; gap: .7rem; margin-top: .9rem; padding-left: 3.1rem; }
+.opgave-krop > button { margin: 0 !important; }
+.opgave-resultat { display: flex; align-items: center; gap: .7rem; }
+.score.stor { width: 2.2rem; height: 2.2rem; font-size: 1.15rem; }
+.score.stor.s-par { border: 1.5px solid var(--linje); }
+.opgave-score-navn { font-family: var(--display); font-weight: 600; font-size: 1.4rem; line-height: 1; }
+.rel-score { font-weight: 600; }
+.rel-score.under { color: var(--gran-lys); }
+.rel-score.lige { color: var(--graa); }
+.rel-score.over { color: var(--guld-moerk); }
+@media (max-width: 480px) { .opgave-krop { padding-left: 0; } .kort { padding: 1.1rem 1rem 1.2rem; } }
 
-/* Kurvene på banekortet */
-.banekort { background: #c9d9cd; }
-.kurv-knap {
-  position: absolute; transform: translate(-50%, -50%);
-  width: clamp(26px, 6.5%, 38px); aspect-ratio: 1; border-radius: 50%; padding: 0;
-  display: grid; place-items: center;
-  background: var(--guld); color: var(--tekst); border: 3px solid #fff;
-  font: 600 .85rem var(--ui); cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,.35);
-}
-.kurv-knap:hover:not(:disabled) { transform: translate(-50%, -50%) scale(1.12); }
-.kurv-knap:focus-visible { outline: 3px solid var(--tekst); outline-offset: 2px; }
-.kurv-knap.spillet { background: #2e7d32; color: #fff; }
-.kurv-knap.laast { background: #e2e8e4; color: #7f9a88; border-color: #c2cec6; box-shadow: none; cursor: not-allowed; }
-.kurv-knap.i-dag:not(.spillet) { animation: puls 2.2s ease-in-out infinite; }
+/* ---------- HULLET SET BAGFRA ---------- */
+.kort .spilstatus { font-weight: 600; margin-bottom: .6rem; }
+.pov-scene { position: relative; }
+.pov { display: block; width: 100%; }
+.pov-mini { position: absolute; right: 8px; top: 8px; width: 17%; max-width: 70px; border: 2px solid var(--gran); }
+.kort .hul-besked { font-weight: 600; min-height: 1.5em; margin: .5rem 0; }
+.maalere { display: grid; gap: .5rem; margin-bottom: .9rem; }
+.maaler { display: grid; grid-template-columns: 3rem 1fr; align-items: center; gap: .6rem; font-weight: 600; font-size: .95rem; }
+.spor { position: relative; height: 24px; background: var(--gran); overflow: hidden; }
+.spor .zone { position: absolute; top: 0; bottom: 0; background: var(--messing); }
+.spor .markoer { position: absolute; top: 0; bottom: 0; width: 5px; margin-left: -2.5px; background: #fff; box-shadow: 0 0 0 1.5px var(--blaek); }
+.spor .fyld { position: absolute; left: 0; top: 10px; height: 4px; background: rgba(255,255,255,.75); }
+.spor .fyld::after { content: ""; position: absolute; right: -2px; top: -10px; width: 5px; height: 24px; background: #fff; box-shadow: 0 0 0 1.5px var(--blaek); }
+.hul-resultat { padding: .6rem 0 .8rem; }
+.kort .hul-resultat-navn { font-family: var(--display); font-weight: 700; font-size: 3rem; line-height: 1; color: var(--gran-lys); }
+.hul-resultat.s-par .hul-resultat-navn { color: var(--blaek); }
+.hul-resultat.s-bogey .hul-resultat-navn, .hul-resultat.s-dobbeltbogey .hul-resultat-navn, .hul-resultat.s-vaerre .hul-resultat-navn { color: var(--guld-moerk); }
 
-/* Hullets side */
-.kort .sektion { text-align: left; background: #fff; border-radius: 10px; padding: .9rem 1rem; margin-bottom: .8rem; }
-.kort .sektion h3 { font-family: var(--display); font-weight: 600; margin: 0 0 .4rem; font-size: 1.15rem; }
-.kort .sektion .resultat-point { margin-bottom: .2rem; }
-.kort .sektion .start, .kort .sektion .proeve-knap { margin: .6rem 0 0; }
-.kort .sektion.caddie { background: #f6efe0; }
+/* ---------- CADDIEOPGAVER ---------- */
+.tekstsvar { display: flex; gap: .5rem; margin-bottom: .4rem; }
+.tekstsvar input { flex: 1; min-width: 0; font-size: 1.05rem; padding: .65rem .8rem; border: 1.5px solid var(--blaek); border-radius: 2px; background: #fff; color: var(--blaek); }
+.tidligere-gaet { list-style: none; padding: 0; margin: 0 0 .7rem; display: flex; flex-wrap: wrap; gap: .3rem 1rem; }
+.tidligere-gaet li { color: var(--guld-moerk); text-decoration: line-through; }
+.wordle { display: grid; grid-template-columns: repeat(var(--l, 5), 1fr); gap: .3rem; max-width: 17rem; margin: 0 auto 1.1rem; }
+.wordle .felt { aspect-ratio: 1; display: grid; place-items: center; border: 1.5px solid #c6c0af; background: #fff; font-family: var(--display); font-weight: 600; font-size: 1.7rem; line-height: 1; }
+.wordle .felt.rigtig { background: var(--gran); border-color: var(--gran); color: #fff; }
+.wordle .felt.findes { background: var(--messing); border-color: var(--messing); color: var(--blaek); }
+.wordle .felt.forkert { background: #e3e1d8; border-color: #c6c0af; color: #66736c; }
+.grafik { background: #fff; border: 1px solid var(--linje); padding: .5rem; margin-bottom: 1rem; }
+.grafik svg { display: block; width: 100%; height: auto; }
+.kort .spoergsmaal { font-size: 1.08rem; margin-bottom: 1rem; }
+.kort .emoji { font-size: 3rem; line-height: 1.3; margin-bottom: .8rem; }
+.kort .forklaring { color: var(--graa); margin: .4rem 0 1rem; }
+.kort .svar-boks { font-weight: 700; font-size: 1.1rem; padding: .7rem 0; margin-bottom: .8rem; border-top: 1px solid var(--linje); border-bottom: 1px solid var(--linje); }
 
-.kort .naeste-hul { background: #e8f2e7; color: #1d4d20; border-radius: 8px; padding: .7rem .9rem; font-weight: 600; margin: .4rem 0 .8rem; }
-.kort .naeste-knap { margin-bottom: .6rem; }
-.kort .proeve-knap + .proeve-knap { margin-top: .5rem; }
+/* ---------- JULEBUTIKKEN: kuponer med prisen på en afrivningsflig ---------- */
+.kuponer { list-style: none; padding: 0; margin: 0; display: grid; gap: .8rem; }
+.kupon { --kant: var(--messing); --flig: 6.2rem; position: relative; display: grid; grid-template-columns: 1fr var(--flig); background: #fff; border: 1.5px solid var(--kant); border-radius: 3px; }
+/* Hak i top og bund, hvor fligen rives af */
+.kupon::before, .kupon::after { content: ""; position: absolute; right: calc(var(--flig) - .5rem); width: 1rem; height: 1rem; border-radius: 50%; background: var(--papir); border: 1.5px solid var(--kant); }
+.kupon::before { top: calc(-.5rem - 1px); clip-path: inset(calc(50% - 1.5px) 0 0 0); }
+.kupon::after { bottom: calc(-.5rem - 1px); clip-path: inset(0 0 calc(50% - 1.5px) 0); }
+.kupon-navn { grid-column: 1; padding: .95rem 1.1rem .45rem; font-weight: 600; font-size: 1.05rem; line-height: 1.3; }
+.kupon-pris { grid-column: 2; grid-row: 1 / span 3; display: grid; grid-auto-flow: column; align-items: center; justify-content: center; border-left: 1.5px dashed var(--kant); font-size: 1.6rem; }
+.kupon-knapper, .kupon .lille { grid-column: 1; padding: 0 1.1rem .95rem; }
+.kupon-knapper { display: flex; gap: .5rem; flex-wrap: wrap; }
+.kort .kupon button { padding: .45rem 1rem; font-size: .95rem; }
+/* Ikke råd endnu: grå med stiplet kant */
+.kupon.mangler { --kant: #9c9889; background: #ece9df; border-style: dashed; border-width: 2px; color: #6a6f68; }
+.kupon.mangler::before, .kupon.mangler::after { border-style: dashed; }
+.kupon.mangler .p-ikon { filter: grayscale(1); opacity: .6; }
+.kort .kupon .koeb:disabled { background: none; border: 0; color: #6a6f68; opacity: 1; padding: 0; font-weight: 500; }
+/* Købt */
+.kupon.koebt { --kant: var(--gran-lys); }
+.koebt .kupon-pris { font-size: .95rem; font-weight: 600; color: var(--gran-lys); text-align: center; padding: 0 .4rem; }
+.kupon.indloest { opacity: .6; }
+.kupon .lille:empty, .tillykke .lille:empty { display: none; }
+.tom { color: var(--graa); padding: .6rem 0; }
+#mine-overskrift, #spilleder h3 { font-family: var(--display); font-weight: 600; font-size: 1.4rem; margin: 1.4rem 0 .9rem; padding-top: 1.1rem; border-top: 2px solid var(--blaek); }
+.tillykke { background: var(--gran); color: var(--lys); padding: 1.1rem 1.2rem; margin-bottom: 1.2rem; display: grid; gap: .5rem; justify-items: start; }
+.kort .tillykke-titel { font-family: var(--display); font-weight: 600; font-size: 1.6rem; line-height: 1.1; }
+.tillykke .lille { color: var(--daempet); }
+.kort .tillykke button { background: var(--messing); border-color: var(--messing); color: var(--blaek); }
 
-/* Hullet set bagfra */
-.pov-scene { position: relative; margin-bottom: .2rem; }
-.pov { display: block; width: 100%; border-radius: 10px; }
-.pov-mini { position: absolute; right: 8px; top: 8px; width: 17%; max-width: 70px; border-radius: 6px; border: 2px solid rgba(255,255,255,.85); }
-
-/* Hullet ovenfra (bruges ikke længere) */
-.hulkort { display: block; width: 100%; height: min(56vh, 440px); border-radius: 8px; background: #cfdccf; touch-action: manipulation; cursor: crosshair; }
-.kort .hul-besked { font-size: .95rem; min-height: 1.4em; margin: .5rem 0; }
-.disc-valg { display: flex; gap: .4rem; margin-bottom: .6rem; }
-.kort .disc-knap { flex: 1; background: #fff; color: var(--tekst); border: 2px solid #d8cdb8; padding: .5rem .3rem; font-size: .82rem; }
-.kort .disc-knap.valgt { border-color: #e8590c; background: #fff1e6; font-weight: 700; }
-.kraftmaaler { margin-bottom: .6rem; }
-.kraftmaaler .spor { height: 22px; border-radius: 11px; }
-.kraftmaaler .zone { left: 44%; width: 12%; }
-.kraftmaaler .markoer { width: 5px; margin-left: -2.5px; }
-.hul-resultat { padding: 1.2rem 0 .4rem; }
-.kort .hul-resultat-navn { font-family: var(--display); font-size: 2.4rem; margin: 0; color: #2e7d32; }
-.hul-resultat.s-bogey .hul-resultat-navn, .hul-resultat.s-dobbeltbogey .hul-resultat-navn, .hul-resultat.s-vaerre .hul-resultat-navn { color: var(--roed); }
-.hul-resultat.s-par .hul-resultat-navn { color: var(--tekst); }
-
-/* ---------- SPILLEDER ---------- */
-body.spilleder-tilstand .banekort, body.spilleder-tilstand .banekort-hjaelp, body.spilleder-tilstand .status { display: none; }
-#spilleder { max-width: 40rem; margin: 0 auto; background: var(--papir); color: var(--tekst); border-radius: 10px; }
-#spilleder h2 { margin-top: 0; }
-#spilleder h3 { font-family: var(--display); font-weight: 600; margin: 1.4rem 0 .6rem; }
-.oversigt { width: 100%; border-collapse: collapse; text-align: left; font-size: .95rem; }
-.oversigt th, .oversigt td { padding: .45rem .5rem; border-bottom: 1px solid #e3d9c6; }
+/* ---------- SPILLEDER (?spilleder) ---------- */
+body.spilleder-tilstand .tavle > :not(.tavle-top), body.spilleder-tilstand .tal-felt, body.spilleder-tilstand #aabn-butik, body.spilleder-tilstand .banekort { display: none; }
+#spilleder { background: var(--papir); width: min(100%, 44rem); margin: 0 auto; padding: 1.6rem 1.2rem 3rem; }
+#spilleder h2 { font-family: var(--display); font-weight: 600; font-size: 2rem; }
+.oversigt { width: 100%; border-collapse: collapse; text-align: left; }
+.oversigt th, .oversigt td { padding: .45rem .5rem .45rem 0; border-bottom: 1px solid var(--linje); }
