@@ -6,8 +6,8 @@
 /* ---------- 1. INDSTILLINGER ---------- */
 const OVERSKRIFT = "Mortens Jule-Open";      // Overskriften øverst på siden
 const UNDEROVERSKRIFT = "Merry Discmas";   // Linjen i håndskrift under overskriften
-const NAVN = "Min elskede";        // Hans navn eller kælenavn
-const AFSENDER = "mig";            // Dit navn. Står i beskeden, han sender dig, når han køber noget
+const NAVN = "Morten";              // Hans navn eller kælenavn
+const AFSENDER = "Julie-manden";   // Dit navn. Står i beskeden, han sender dig, når han køber noget
 const AAR = new Date().getFullYear();
 
 // Firebase: så point, køb og rekorder følger ham på tværs af enheder
