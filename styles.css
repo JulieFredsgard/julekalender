@@ -16,7 +16,7 @@
   --linje: #d9d4c5;      /* tynde linjer på papir */
   --blaek: #1b2a24;      /* tekst på papir */
   --graa: #66736c;       /* dæmpet tekst på papir */
-  --roed: #b4232c;       /* bruges kun i scorekortet */
+  --roed: #b4232c;       /* bruges kun til bogey og værre i scorekortet */
   --messing: #c9a24b;    /* guld */
   --guld-moerk: #866617; /* guld til tekst på lys baggrund */
   --lys: #f4f1e8;        /* tekst på grønt */
@@ -114,7 +114,7 @@ h1 .logo-open { color: var(--messing); }
 .scorekort-tabel th { text-align: left; font-family: var(--display); font-weight: 500; padding: 0 .8rem 0 1.6rem; color: var(--graa); background: var(--papir); }
 .scorekort-tabel td { min-width: 1.7rem; height: 1.6rem; padding: 0; border-left: 1px solid var(--linje); }
 .hul-raekke td { font-family: var(--display); font-weight: 600; font-size: 1.05rem; }
-.hul-raekke td.i-dag { background: var(--roed); color: #fff; }
+.hul-raekke td.i-dag { background: var(--messing); color: var(--blaek); }
 .par-raekke td { color: var(--graa); }
 .score-raekke td, .score-raekke th { border-top: 1px solid var(--linje); height: 2.1rem; font-weight: 600; }
 .scorekort-tabel td.sum { min-width: 4rem; background: #ece7d9; font-weight: 700; color: var(--blaek); }
