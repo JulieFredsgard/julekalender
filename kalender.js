@@ -509,6 +509,8 @@ function aabnHul(dag) {
   // Opgave 1: hullet
   const st = D.hulstate[dag];
   const o1 = opgaveKort(1, "Spil hullet", "Hovedopgave", res ? "loest" : st ? "igang" : "aaben");
+  // Dobbelt præmie: et guldmærke ved titlen, så det ses både før og efter hullet er spillet
+  if (hul.dobbelt) o1.kort.querySelector(".opgave-navn h3").appendChild(el("span", "dobbelt-maerke", "2× præmie"));
   if (res) {
     const sn = scoreNavn(res.kast, hul.par);
     const r = el("div", "opgave-resultat");
@@ -520,7 +522,7 @@ function aabnHul(dag) {
     o1.krop.appendChild(knapEl("Træn hullet (ingen præmie)", "proeve-knap", () => spilHul(dag, "traening")));
   } else {
     if (st) o1.krop.appendChild(el("p", "opgave-tekst", "Du er i gang – " + st.kast + " kast brugt."));
-    o1.krop.appendChild(knapEl(st ? "Fortsæt hullet" : "Spil hullet", "start", () => spilHul(dag, "rigtig")));
+    o1.krop.appendChild(knapEl((st ? "Fortsæt hullet" : "Spil hullet") + (hul.dobbelt ? " · dobbelt præmie" : ""), "start", () => spilHul(dag, "rigtig")));
   }
   opgaver.appendChild(o1.kort);
 
@@ -538,7 +540,41 @@ function aabnHul(dag) {
   h.appendChild(opgaver);
   // En personlig hilsen, når dagens opgaver er løst
   if (hul.hilsen && loeste === antalOpgaver) h.appendChild(el("p", "hilsen", hul.hilsen));
+  // Regn på særlige dage: falder, så længe dagens side er åben
+  if (hul.regn) regn(hul.regn);
 }
+// Regn hen over skærmen, når begge dagens opgaver er løst: "hjerter" eller "jul" (stjerner, snefnug og små juletræer).
+// Den bliver ved, indtil man forlader dagens side eller lukker den.
+let regnNr = 0;
+function regn(type) {
+  const mitNr = ++regnNr, side = document.getElementById("kort-handling").firstChild;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const lerred = document.getElementById("regn"), r = Math.min(2, devicePixelRatio || 1), B = innerWidth, H = innerHeight;
+  lerred.width = B * r; lerred.height = H * r;
+  const c = lerred.getContext("2d"); c.setTransform(r, 0, 0, r, 0, 0); c.globalAlpha = 1;
+  const former = type === "hjerter" ? ["hjerte"] : ["stjerne", "fnug", "trae", "stjerne", "fnug"];
+  const farver = type === "hjerter" ? ["#c9a24b", "#e8c46a", "#f4f1e8", "#866617"] : ["#c9a24b", "#e8c46a", "#ffffff", "#2b6049"];
+  const stk = Array.from({ length: 45 }, (_, i) => ({
+    x: Math.random() * B, y: -20 - Math.random() * H * 0.9, v: 1.6 + Math.random() * 2.2, sv: Math.random() * 6.3, st: 0.6 + Math.random(),
+    s: 9 + Math.random() * 10, rot: (Math.random() - 0.5) * 0.6, form: former[i % former.length], farve: farver[i % farver.length]
+  }));
+  function tegnForm(p) {
+    c.save(); c.translate(p.x + Math.sin(p.sv) * 14, p.y); c.rotate(p.rot); c.fillStyle = p.farve; c.strokeStyle = p.farve; const s = p.s;
+    if (p.form === "hjerte") { c.beginPath(); c.moveTo(0, s * 0.35); c.bezierCurveTo(-s, -s * 0.3, -s * 0.45, -s, 0, -s * 0.45); c.bezierCurveTo(s * 0.45, -s, s, -s * 0.3, 0, s * 0.35); c.fill(); }
+    else if (p.form === "stjerne") { c.beginPath(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? s * 0.42 : s; c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } c.closePath(); c.fill(); }
+    else if (p.form === "fnug") { c.lineWidth = 1.6; c.beginPath(); for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; c.moveTo(0, 0); c.lineTo(Math.cos(a) * s * 0.8, Math.sin(a) * s * 0.8); } c.stroke(); }
+    else { c.beginPath(); c.moveTo(0, -s); c.lineTo(s * 0.6, s * 0.6); c.lineTo(-s * 0.6, s * 0.6); c.closePath(); c.fill(); }
+    c.restore();
+  }
+  (function tegn() {
+    c.clearRect(0, 0, B, H);
+    // Stop, når kortet lukkes, eller der vises noget andet end dagens side
+    if (mitNr !== regnNr || !kortDialog.open || !side || !side.isConnected) return;
+    stk.forEach(p => { p.y += p.v; p.sv += 0.03 * p.st; if (p.y > H + 20) { p.y = -20; p.x = Math.random() * B; } tegnForm(p); });
+    requestAnimationFrame(tegn);
+  })();
+}
+
 // Et opgavekort med nummer, titel og status
 function opgaveKort(nr, titel, under, status) {
   const kort = el("section", "opgave " + status);
@@ -942,7 +978,7 @@ function spilHul(dag, tilstand) {
     const sn = scoreNavn(kast, hul.par);
     h.innerHTML = "";
     const res = el("div", "hul-resultat s-" + sn.noegle);
-    res.append(el("p", "hul-resultat-navn", sn.navn), el("p", null, kast + " kast på et par " + hul.par + " · " + scoreTekst(kast - hul.par) + (iKurven ? "" : " (samlet op)")));
+    res.append(el("p", "hul-resultat-navn", sn.navn), el("p", null, kast + " kast på et par " + hul.par + " · " + scoreTekst(kast - hul.par) + (iKurven ? "" : " (samlet op)") + (hul.dobbelt && rigtig ? " · dobbelt præmie" : "")));
     h.appendChild(res);
     if (rigtig) {
       const g = HUL_POINT[sn.noegle] * (hul.dobbelt ? 2 : 1);

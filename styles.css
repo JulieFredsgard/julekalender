@@ -264,6 +264,8 @@ dialog::backdrop { background: rgba(15,38,30,.78); }
 .opgave-navn { flex: 1; min-width: 0; }
 .opgave-navn h3 { font-family: var(--display); font-weight: 600; font-size: 1.4rem; line-height: 1.1; }
 .opgave-under { font-size: .9rem; color: var(--graa); }
+.dobbelt-maerke { display: inline-block; margin-left: .5rem; padding: .15rem .45rem .18rem; vertical-align: .2rem; background: var(--messing); color: var(--blaek); font-family: var(--display); font-weight: 600; font-size: .85rem; letter-spacing: .03em; line-height: 1; }
+#regn { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 5; }
 .kort .hilsen { margin-top: 1.1rem; padding: 1rem 1.2rem; background: var(--gran); color: var(--lys); font-family: var(--display); font-weight: 500; font-size: 1.35rem; line-height: 1.25; white-space: pre-line; }
 .opgave-chip { flex: none; font-size: .9rem; font-weight: 600; color: var(--graa); }
 .opgave-chip.loest { color: var(--gran-lys); }
