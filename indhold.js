@@ -8,8 +8,9 @@ const OVERSKRIFT = "Mortens Jule-Open";      // Overskriften øverst på siden
 const UNDEROVERSKRIFT = "Merry Discmas";   // Linjen i håndskrift under overskriften
 const NAVN = "Morten";              // Hans navn eller kælenavn. Står under mailen
 const AFSENDER = "Julie-manden";   // Dit navn. Står i beskeden, han sender dig, når han køber noget
-const MAIL = ["julie.fredsgaard", "hotmail.com"];   // Din mail, delt i to så spamrobotter ikke finder den. Får besked om køb
+const MAIL = ["julie.fredsgaard", "hotmail.com"];   // Din mail, delt i to så spamrobotter ikke finder den. Bruges, hvis den automatiske mail fejler
 const MAIL_EMNE = "Køb i julebutikken";   // Emnefeltet i mailen
+const WEB3FORMS_NOEGLE = "c925f713-66e9-4de7-9941-3287f781a74a";   // Fra web3forms.com. Sender automatisk mail ved køb. Må gerne være offentlig
 const AAR = new Date().getFullYear();
 
 // Firebase: så point, køb og rekorder følger ham på tværs af enheder

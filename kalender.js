@@ -1116,15 +1116,64 @@ function aabnMail(navn, pris) {
   const tekst = ["Hej " + AFSENDER, "", "Jeg har lige købt \"" + navn + "\" for " + pris + " præmiepoint i Julebutikken. Hvornår får jeg den?", "", "Hilsen " + NAVN].join(String.fromCharCode(13, 10));
   location.href = "mailto:" + MAIL.join("@") + "?subject=" + encodeURIComponent(MAIL_EMNE) + "&body=" + encodeURIComponent(tekst);
 }
+// Sender købet til dig via Web3Forms, så han ikke selv skal skrive. Svarer true, hvis mailen gik igennem.
+async function sendKoebMail(kupon) {
+  if (!WEB3FORMS_NOEGLE) return false;
+  const tid = new Date().toLocaleString("da-DK", { dateStyle: "long", timeStyle: "short" });
+  const linjer = [NAVN + " har købt \"" + kupon.navn + "\" for " + kupon.pris + " præmiepoint i Julebutikken.", "", "Tidspunkt: " + tid, "Saldo efter købet: " + saldo() + " præmiepoint"];
+  try {
+    const svar = await fetch("https://api.web3forms.com/submit", {
+      method: "POST", keepalive: true,
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ access_key: WEB3FORMS_NOEGLE, subject: (TEST ? "[TEST] " : "") + MAIL_EMNE, from_name: OVERSKRIFT, message: linjer.join(String.fromCharCode(10)) })
+    });
+    const data = await svar.json().catch(() => ({}));
+    return svar.ok && data.success === true;
+  } catch (e) { console.warn("Kunne ikke sende mail om købet:", e); return false; }
+}
+// Boksen med tillykke og konfetti efter et køb
+const koebtBoks = document.getElementById("koebt-boks");
+function visKoebtBoks(kupon) {
+  document.getElementById("koebt-titel").textContent = kupon.navn;
+  const tekst = document.getElementById("koebt-tekst"), ekstra = document.getElementById("koebt-ekstra");
+  tekst.textContent = AFSENDER + " har fået besked og sørger for, at den snart lander hos dig.";
+  ekstra.innerHTML = "";
+  koebtBoks.showModal();
+  konfetti(document.getElementById("konfetti"));
+  return besked => {
+    if (besked) return;
+    tekst.textContent = "Beskeden til " + AFSENDER + " kunne ikke sendes automatisk. Skriv selv, så er du sikker på at få den.";
+    ekstra.appendChild(knapEl("Skriv til " + AFSENDER, "koebt-knap-lys", () => aabnMail(kupon.navn, kupon.pris)));
+  };
+}
+document.getElementById("koebt-ok").addEventListener("click", () => koebtBoks.close());
+// Konfetti i guld, grønt og hvidt, der falder i et par sekunder
+function konfetti(lerred) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const r = Math.min(2, devicePixelRatio || 1), B = innerWidth, H = innerHeight;
+  lerred.width = B * r; lerred.height = H * r;
+  const c = lerred.getContext("2d"); c.scale(r, r);
+  const farver = ["#c9a24b", "#e8c46a", "#f4f1e8", "#2b6049", "#866617"];
+  const stk = Array.from({ length: 160 }, () => ({
+    x: B / 2 + (Math.random() - 0.5) * B * 0.3, y: H * 0.35, vx: (Math.random() - 0.5) * 16, vy: -6 - Math.random() * 12,
+    v: Math.random() * 6, dv: (Math.random() - 0.5) * 0.4, b: 6 + Math.random() * 6, h: 3 + Math.random() * 4, f: farver[Math.floor(Math.random() * farver.length)]
+  }));
+  const start = performance.now();
+  (function tegn(nu) {
+    const t = (nu - start) / 1000;
+    c.clearRect(0, 0, B, H);
+    if (t > 4 || !koebtBoks.open) return;
+    c.globalAlpha = Math.min(1, 4 - t);
+    stk.forEach(p => {
+      p.vy += 0.35; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.v += p.dv;
+      c.save(); c.translate(p.x, p.y); c.rotate(p.v); c.scale(1, Math.cos(p.v * 2)); c.fillStyle = p.f; c.fillRect(-p.b / 2, -p.h / 2, p.b, p.h); c.restore();
+    });
+    requestAnimationFrame(tegn);
+  })(start);
+}
 function tegnButik() {
   document.getElementById("butik-saldo-stor").textContent = saldo();
-  const tillykke = document.getElementById("tillykke");
-  tillykke.innerHTML = "";
-  tillykke.hidden = !ligeKoebt;
-  if (ligeKoebt) {
-    const k = KUPONER.find(x => x.id === ligeKoebt);
-    tillykke.append(el("p", "tillykke-titel", "Tillykke! 🎉"), el("p", null, k.navn), knapEl("Skriv til " + AFSENDER, "koeb", () => aabnMail(k.navn, k.pris)));
-  }
+  document.getElementById("tillykke").hidden = true;
   const liste = document.getElementById("butik-liste");
   liste.innerHTML = "";
   KUPONER.filter(k => !D.koeb[k.id]).forEach(kupon => {
@@ -1155,8 +1204,9 @@ function tegnButik() {
     else {
       li.appendChild(el("span", "kupon-pris", "På vej"));
       const kn = el("div", "kupon-knapper");
-      kn.append(knapEl("Skriv mail igen", "fortryd", () => aabnMail(navn, kb.pris)),
-        knapEl("Jeg har fået den", "fortryd", () => { gem("koeb", id, { ...kb, modtaget: true }); opdaterTop(); tegnButik(); }));
+      // Knappen til at skrive selv vises kun, hvis den automatiske mail ikke gik igennem
+      if (kb.mail === false) kn.appendChild(knapEl("Skriv til " + AFSENDER, "fortryd", () => aabnMail(navn, kb.pris)));
+      kn.append(knapEl("Jeg har fået den", "fortryd", () => { gem("koeb", id, { ...kb, modtaget: true }); opdaterTop(); tegnButik(); }));
       li.append(kn);
     }
     mine.appendChild(li);
@@ -1164,11 +1214,12 @@ function tegnButik() {
 }
 function koeb(kupon) {
   if (saldo() < kupon.pris || D.koeb[kupon.id]) return;
-  gem("koeb", kupon.id, { pris: kupon.pris, tid: Date.now(), modtaget: false });
-  bekraefter = null; ligeKoebt = kupon.id;
+  const kb = { pris: kupon.pris, tid: Date.now(), modtaget: false };
+  gem("koeb", kupon.id, kb);
+  bekraefter = null; ligeKoebt = null;
   opdaterTop(); tegnButik();
-  butik.scrollTop = 0;
-  aabnMail(kupon.navn, kupon.pris);
+  const svar = visKoebtBoks(kupon);
+  sendKoebMail(kupon).then(ok => { gem("koeb", kupon.id, { ...kb, mail: ok }); svar(ok); tegnButik(); });
 }
 document.getElementById("aabn-butik").addEventListener("click", () => { bekraefter = null; ligeKoebt = null; tegnButik(); butik.showModal(); });
 document.getElementById("luk-butik").addEventListener("click", () => butik.close());
