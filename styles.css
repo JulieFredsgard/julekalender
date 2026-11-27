@@ -290,7 +290,7 @@ dialog::backdrop { background: rgba(15,38,30,.78); }
 .maalere { display: grid; gap: .5rem; margin-bottom: .9rem; }
 .maaler { display: grid; grid-template-columns: 3rem 1fr; align-items: center; gap: .6rem; font-weight: 600; font-size: .95rem; }
 .spor { position: relative; height: 24px; background: var(--gran); overflow: hidden; }
-.spor .zone { position: absolute; top: 0; bottom: 0; background: var(--messing); }
+.maalere[data-fase="sigte"] .maaler.kraft { opacity: .45; }
 .spor .markoer { position: absolute; top: 0; bottom: 0; width: 5px; margin-left: -2.5px; background: #fff; box-shadow: 0 0 0 1.5px var(--blaek); }
 .spor .fyld { position: absolute; left: 0; top: 10px; height: 4px; background: rgba(255,255,255,.75); }
 .spor .fyld::after { content: ""; position: absolute; right: -2px; top: -10px; width: 5px; height: 24px; background: #fff; box-shadow: 0 0 0 1.5px var(--blaek); }

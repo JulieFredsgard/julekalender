@@ -582,7 +582,8 @@ function lavLayout(dag) {
   if (hul.vand === "foran") vand.push({ x1: -bredde, x2: bredde, y1: L - 24, y2: L - 14 });
   if (hul.vand === "side") {
     const side = kurv.x >= 0 ? 1 : -1;
-    vand.push(side > 0 ? { x1: bredde * 0.45, x2: bredde, y1: L * 0.3, y2: L + 6 } : { x1: -bredde, x2: -bredde * 0.45, y1: L * 0.3, y2: L + 6 });
+    // Vandet holder altid mindst 5 m fra kurven, så kurven aldrig står i vandet
+    vand.push(side > 0 ? { x1: Math.max(bredde * 0.45, kurv.x + 5), x2: bredde, y1: L * 0.3, y2: L + 6 } : { x1: -bredde, x2: Math.min(-bredde * 0.45, kurv.x - 5), y1: L * 0.3, y2: L + 6 });
   }
   const iVand = (p, m = 0) => vand.some(v => p.x > v.x1 - m && p.x < v.x2 + m && p.y > v.y1 - m && p.y < v.y2 + m);
   const traeer = [];
@@ -614,8 +615,8 @@ function spilHul(dag, tilstand) {
   const besked = el("p", "hul-besked");
   const maalere = el("div", "maalere");
   maalere.innerHTML =
-    '<div class="maaler sigte"><span class="maaler-navn">Sigte</span><div class="spor"><div class="zone"></div><div class="markoer"></div></div></div>' +
-    '<div class="maaler kraft"><span class="maaler-navn">Kraft</span><div class="spor"><div class="zone"></div><div class="fyld"></div></div></div>';
+    '<div class="maaler sigte"><span class="maaler-navn">Sigte</span><div class="spor"><div class="markoer"></div></div></div>' +
+    '<div class="maaler kraft"><span class="maaler-navn">Kraft</span><div class="spor"><div class="fyld"></div></div></div>';
   const knap = knapEl("Sigt!", "start kast", tryk);
   h.append(status, scene, besked, maalere, knap);
   aktivtSpil = { stop() { stoppet = true; cancelAnimationFrame(raf); } };
@@ -623,8 +624,8 @@ function spilHul(dag, tilstand) {
   const lerred = scene.querySelector(".pov"), ctx = lerred.getContext("2d");
   const mini = scene.querySelector(".pov-mini"), mctx = mini.getContext("2d");
   const W = lerred.width, H = lerred.height, HORISONT = 120, F = 880;
-  const sZone = maalere.querySelector(".sigte .zone"), sMark = maalere.querySelector(".sigte .markoer");
-  const kZone = maalere.querySelector(".kraft .zone"), kFyld = maalere.querySelector(".kraft .fyld");
+  // Sigtemåleren følger linjen: midten er lige mod målet, og enderne er linjens yderste udsving
+  const sMark = maalere.querySelector(".sigte .markoer"), kFyld = maalere.querySelector(".kraft .fyld");
   const tilKurv = () => afstand(st, lay.kurv);
 
   // Skovbryn i horisonten og højdekurver i sneen (faste for hvert hul)
@@ -661,42 +662,59 @@ function spilHul(dag, tilstand) {
       return { type, d, sigteTol: Math.max(0.09, 0.2 - 0.009 * d), kraftVindue: Math.max(0.05, 0.14 - 0.007 * d),
                idealKraft: Math.min(0.85, 0.3 + 0.055 * d), skub, fart: 0.75 + d * 0.045 };
     }
-    const m = findMaal(Math.min(d, T.maks));
+    const m = findMaal(Math.min(d, T.maks), T.sigteTol);
     return { type, d, maalD: m.laengde, T, sigteTol: T.sigteTol, kraftVindue: T.kraftVindue,
-             idealKraft: 0.25 + 0.6 * (m.laengde / T.maks), skub, fart: T.fart, omvej: m.vinkel };
+             idealKraft: 0.25 + 0.6 * (m.laengde / T.maks), skub, fart: T.fart, omvej: m.side,
+             feltC: m.side / (SIGTE_BRED * m.laengde) };   // feltets midte på sigtet (0 = midt i svinget)
   }
-  // Målfeltet: helst lige mod kurven. Står et træ i vejen, eller lander man i vand/OB,
-  // findes den nærmeste åbning med en sikker landing (evt. et kortere kast).
-  function findMaal(laengde) {
-    const ok = (a, l) => {
-      for (let i = 1; i <= 30; i++) {
-        const v = l * i / 30, w = tilVerden(Math.sin(a) * v, Math.cos(a) * v);
-        if (rammerTrae(w, st, 0.8)) return false;
-      }
-      const land = tilVerden(Math.sin(a) * l, Math.cos(a) * l);
+  // Målfeltet: helst lige mod kurven. Står et træ i vejen, eller lander man i vand/OB, flyttes feltet
+  // ud til siden, hvor der er fri bane (evt. et kortere kast). Sigtet svinger altid lige langt ud til begge sider.
+  function findMaal(laengde, tol) {
+    const fri = (u, l) => {
+      for (let i = 1; i <= 30; i++) if (rammerTrae(tilVerden(u * i / 30, l * i / 30), st, 0.8)) return false;
+      const land = tilVerden(u, l);
       return Math.abs(land.x) < lay.bredde - 2 && land.y < lay.L + 15 && !lay.iVand(land, 1.5);
     };
-    for (const andel of [1, 0.85, 0.7, 0.55, 0.4, 0.25])
-      for (let g = 0; g <= 90; g += 3)
-        for (const s of g ? [1, -1] : [1]) { const a = s * g * Math.PI / 180; if (ok(a, laengde * andel)) return { vinkel: a, laengde: laengde * andel }; }
-    return { vinkel: 0, laengde: laengde * 0.25 };
+    for (const andel of [1, 0.85, 0.7, 0.55, 0.4, 0.25]) {
+      const l = laengde * andel, maksSide = SIGTE_BRED * l * (1 - tol) * 0.95;
+      for (let k = 0; k <= 30; k++) for (const s of k ? [1, -1] : [1]) {
+        const u = s * maksSide * k / 30;
+        if (fri(u, l)) return { side: u, laengde: l };
+      }
+    }
+    return { side: 0, laengde: laengde * 0.25 };
   }
-  // Rammer et punkt et træ? Træer helt tæt på disc'en (under 2,5 m) tæller ikke,
-  // så man altid kan kaste forbi et træ, man står lige ved.
+  // Rammer et punkt et træ? Et træ, man ligger lige ved (fx efter at have ramt det), tæller ikke,
+  // så man altid kommer væk fra det i næste kast.
   function rammerTrae(p, fra, margen) {
     if (afstand(p, fra) <= 2.5) return null;
-    return lay.traeer.find(t => afstand(p, t) < t.r + (margen || 0)) || null;
+    return lay.traeer.find(t => afstand(t, fra) > t.r + 5 && afstand(p, t) < t.r + (margen || 0)) || null;
   }
   // Retning og længde ud fra målerne
-  function vinkelFra(sF) {
-    const vf = P.type === "putt" ? Math.atan(0.45 / P.d) * 180 / Math.PI : P.T.vinkelFejl;
-    return (P.omvej || 0) + (Math.abs(sF) <= 1 ? sF * vf : Math.sign(sF) * (vf + (Math.abs(sF) - 1) * (P.type === "putt" ? vf * 1.5 : 9))) * Math.PI / 180;
+  // Sigtet kører lige fra venstre til højre hen over billedet (ingen buer), lige langt ud til begge sider,
+  // uanset om det er en kort putt eller et drive. SIGTE_BRED er, hvor langt ud til siden det når (andel af dybden).
+  const SIGTE_BRED = 0.38;
+  // Punktet på sigtelinjen, når kastet når l meter frem. Linjen går fra kameraets fødder.
+  function punkt(l) { return { u: sigte * SIGTE_BRED * (l + bag()), v: l }; }
+  // Landingsfeltets halve bredde i meter: svarer præcis til det vindue på sigtet, der giver et ramt kast
+  function feltBredde() { const L = P.maalD || P.d; return (bag() + L) * SIGTE_BRED * P.sigteTol; }
+  // Landingsfeltets dybde i meter (samme tal bruges til feltet på jorden)
+  // Ved putts fanger kæderne også en hård putt: den går i, hvis den ville lande op til 1,5 m bag kurven.
+  // Helt tæt på (under 6 m) er der endnu mere plads, så en fast putt tæt på næsten altid går i.
+  const puttBag = d => Math.max(1.5, 3 - 0.25 * d);
+  // Feltets forreste og bageste kant i meter fra disc'en
+  function feltKanter() { const L = P.maalD || P.d, dyb = feltDybde(); return P.type === "putt" ? [L - dyb, L + puttBag(L)] : [L - dyb, L + dyb]; }
+  function feltDybde() { const L = P.maalD || P.d; return P.type === "putt" ? Math.min(0.5, L * 0.3) : L * P.T.laengdeFejl; }
+  // Kastets længde ud fra kraftmåleren. Ens for alle kast: fra disc'en ved nul kraft, gennem landingsfeltet,
+  // når kraften er i det rigtige vindue, og videre forbi med samme fart. Så føles en putt som et drive.
+  function laengdeFra(k) {
+    const L = P.maalD || P.d, dyb = feltDybde();
+    const a = P.idealKraft - P.kraftVindue, b = P.idealKraft + P.kraftVindue, haeld = (L - dyb) / a;
+    if (k < a) return Math.max(0.3, k * haeld);
+    if (k <= b) return L - dyb + (k - a) / (b - a) * 2 * dyb;
+    return L + dyb + (k - b) * haeld;
   }
-  function laengdeFra(kF) {
-    if (P.type === "putt") return P.d * (1 + Math.max(-0.5, Math.min(0.5, kF * 0.12)));
-    const lf = P.T.laengdeFejl;
-    return P.maalD * (1 + (Math.abs(kF) <= 1 ? kF * lf : Math.sign(kF) * (lf + (Math.abs(kF) - 1) * 0.22)));
-  }
+
 
   /* ----- Tegning ----- */
   function linje(punkter, farve, bredde, stiplet) {
@@ -752,27 +770,38 @@ function spilHul(dag, tilstand) {
   }
   // Sigtelinje og grønt målfelt i billedet
   function tegnSigte() {
-    const vinkel = vinkelFra((sigte + P.skub) / P.sigteTol);
     const maalD = P.maalD || P.d;
-    const laengde = fase === "kraft" ? laengdeFra((kraft - P.idealKraft) / P.kraftVindue) : maalD;
-    const vf = P.type === "putt" ? 0.45 : Math.tan(P.T.vinkelFejl * Math.PI / 180) * maalD;
-    const dyb = P.type === "putt" ? 0.5 : maalD * P.T.laengdeFejl;
-    const om = P.omvej || 0;
+    const laengde = fase === "kraft" ? laengdeFra(kraft) : maalD;
+    const vf = feltBredde();
+    const dyb = feltDybde();
     ctx.fillStyle = "rgba(201,162,75,.55)"; ctx.strokeStyle = "#16352a"; ctx.lineWidth = 2; ctx.beginPath();
     for (let a = 0; a <= 6.3; a += 0.15) {
-      const lu = Math.cos(a) * vf, lv = maalD + Math.sin(a) * dyb;
-      const p = projicer(lu * Math.cos(om) + lv * Math.sin(om), -lu * Math.sin(om) + lv * Math.cos(om));
+      const [for_, bag_] = feltKanter(), lu = Math.cos(a) * vf, lv = (for_ + bag_) / 2 + Math.sin(a) * (bag_ - for_) / 2;
+      const p = projicer(lu + (P.omvej || 0), lv);
       a ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y);
     }
     ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.strokeStyle = "#16352a"; ctx.lineWidth = 4; ctx.setLineDash([12, 9]); ctx.beginPath();
-    // Fra kameraets fødder og frem til det punkt, der sigtes på
-    for (let i = 0; i <= 40; i++) {
-      const t = i / 40, p = projicer(Math.sin(vinkel) * laengde * t, -bag() + (Math.cos(vinkel) * laengde + bag()) * t);
-      i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y);
-    }
+    // Fra krydset og lige ned til kanten af billedet (linjen fra kameraets fødder er lodret i billedet).
+    // Stregerne regnes fra krydset, så de ser ens ud ved alle kast og ikke "kravler", når linjen flytter sig.
+    { const q = punkt(laengde), p = projicer(q.u, q.v); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, H); }
     ctx.stroke(); ctx.setLineDash([]);
-    const e = projicer(Math.sin(vinkel) * laengde, Math.cos(vinkel) * laengde);
+    // Afstandsmærker på jorden langs sigtelinjen, så man kan se, hvor langt kastet når. Kun mens kraften vælges.
+    if (fase === "kraft") {
+    const trin = P.type === "putt" ? 1 : P.type === "approach" ? 5 : 10, tekstHver = P.type === "approach" ? 10 : trin;
+    ctx.strokeStyle = "rgba(22,53,42,.6)"; ctx.fillStyle = "rgba(22,53,42,.8)"; ctx.lineWidth = 2.5; ctx.textBaseline = "middle";
+    let sidstY = Infinity;   // springer et mærke over, hvis det ville stå oven i det forrige
+    for (let m = trin; m <= maalD * 1.4; m += trin) {
+      const q = punkt(m), cu = q.u, cv = q.v;
+      if (cv + bag() < 1) continue;
+      const hb = P.type === "putt" ? 0.22 : trin * 0.1;
+      const a = projicer(cu - hb, cv), b = projicer(cu + hb, cv);
+      if (sidstY - b.y < 14) continue;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      if (m % tekstHver === 0 && sidstY - b.y > 30) { ctx.font = "600 " + Math.round(Math.max(17, Math.min(28, b.s * (P.type === "putt" ? 0.22 : 1.1)))) + "px Barlow, sans-serif"; ctx.fillText(m + " m", b.x + 8, b.y); sidstY = b.y; }
+    }
+    }
+    const eq = punkt(laengde), e = projicer(eq.u, eq.v);
     ctx.strokeStyle = "#16352a"; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.arc(e.x, e.y, 9, 0, 7); ctx.moveTo(e.x - 14, e.y); ctx.lineTo(e.x + 14, e.y); ctx.moveTo(e.x, e.y - 14); ctx.lineTo(e.x, e.y + 14); ctx.stroke();
   }
@@ -793,16 +822,12 @@ function spilHul(dag, tilstand) {
     if (stoppet) return;
     if (st.kast >= MAKS_KAST) return faerdig(false);
     // Den grønne sigtezone og markøren starter et nyt sted ved hvert kast
-    skub = (Math.random() * 2 - 1) * 0.45;
     sigteStart = Math.random() * Math.PI * 2;
     P = parametre();
     fase = "sigte"; t0 = performance.now();
     status.textContent = KASTTYPER[P.type].navn + " · Kast " + (st.kast + 1) + " · " + (P.d < 10 ? P.d.toLocaleString("da", { maximumFractionDigits: 1 }) : Math.round(P.d)) + " m til kurven";
-    sZone.style.left = (50 + (-P.skub - P.sigteTol) * 50) + "%";
-    sZone.style.width = (P.sigteTol * 100) + "%";
-    kZone.style.left = ((P.idealKraft - P.kraftVindue) * 100) + "%";
-    kZone.style.width = (P.kraftVindue * 200) + "%";
     kFyld.style.width = "0%";
+    maalere.dataset.fase = "sigte";
     knap.textContent = "Sigt!"; knap.disabled = false;
     if (P.omvej) besked.textContent = "Træ i vejen – målfeltet ligger ved åbningen.";
     loop();
@@ -810,14 +835,18 @@ function spilHul(dag, tilstand) {
   function loop() {
     if (stoppet) return;
     const t = (performance.now() - t0) / 1000;
-    if (fase === "sigte") { sigte = Math.sin(sigteStart + t * tempo * (2.3 + (P.type === "drive" ? 0.6 : 0))); sMark.style.left = (50 + sigte * 50) + "%"; }
-    else if (fase === "kraft") { const x = (t * tempo * P.fart) % 2; kraft = x < 1 ? x : 2 - x; kFyld.style.width = (kraft * 100) + "%"; }
+    // Sigte: jævn fart frem og tilbage (ikke som et pendul). Kraft: samme fart. Begge er ens ved alle kast.
+    if (fase === "sigte") {
+      sigte = Math.asin(Math.sin(sigteStart + t * tempo * 2.0)) * 2 / Math.PI;
+      sMark.style.left = (50 + sigte * 50) + "%";
+    }
+    else if (fase === "kraft") { const x = (t * tempo * 0.92) % 2; kraft = x < 1 ? x : 2 - x; kFyld.style.width = (kraft * 100) + "%"; }
     else return;
     tegn();
     raf = requestAnimationFrame(loop);
   }
   function tryk() {
-    if (fase === "sigte") { fase = "kraft"; t0 = performance.now(); knap.textContent = P.type === "putt" ? "Putt!" : "Kast!"; }
+    if (fase === "sigte") { fase = "kraft"; t0 = performance.now(); maalere.dataset.fase = "kraft"; knap.textContent = P.type === "putt" ? "Putt!" : "Kast!"; }
     else if (fase === "kraft") { fase = "flyver"; cancelAnimationFrame(raf); knap.disabled = true; udfoer(); }
   }
 
@@ -830,17 +859,18 @@ function spilHul(dag, tilstand) {
     return { x: lay.kurv.x + Math.cos(a), y: lay.kurv.y + Math.sin(a) };
   }
   function udfoer() {
-    const sF = (sigte + P.skub) / P.sigteTol, kF = (kraft - P.idealKraft) / P.kraftVindue;
+    const sF = (sigte - (P.feltC || 0)) / P.sigteTol, kF = (kraft - P.idealKraft) / P.kraftVindue;
     const fra = { x: st.x, y: st.y };
     let pkt, slutI, resultat;
     if (P.type === "putt") {
-      const ramt = Math.abs(sF) <= 1 && Math.abs(kF) <= 1, d = P.d;
+      const [for_, bag_] = feltKanter(), lp = laengdeFra(kraft);
+      const ramt = Math.abs(sF) <= 1 && lp >= for_ && lp <= bag_, d = P.d;
       let land;
       if (ramt) land = { u: 0, v: d };
       else {
-        const side = Math.max(-1, Math.min(1, sF / 2)) * (1 + Math.random() * 1.5);
-        const frem = kF < -1 ? d * (0.5 + Math.random() * 0.25) : kF > 1 ? d + 1 + Math.random() * 2.5 : d + (Math.random() - 0.3);
-        land = { u: side + Math.sign(sF) * 0.6, v: frem };
+        // Forbi: disc'en lander der, hvor krydset stod, med en lille smule variation
+        const q = punkt(laengdeFra(kraft) + (Math.random() - 0.5) * 0.3);
+        land = { u: q.u + (Math.random() - 0.5) * 0.2, v: q.v };
       }
       pkt = Array.from({ length: 41 }, (_, i) => { const t = i / 40, w = tilVerden(land.u * t, land.v * t); return { ...w, z: (ramt ? 1.1 : 0.9) + Math.sin(Math.PI * t) * (0.4 + d * 0.05) - (ramt ? 0.1 : 0.9) * t }; });
       slutI = 40;
@@ -848,9 +878,9 @@ function spilHul(dag, tilstand) {
       resultat = ramt ? { type: "ind", tekst: "Kæderne synger! 🎉" } : { type: "ligger", p: mindstEnMeter(p), tekst: null };
     } else {
       // Lidt naturlig variation, så selv et perfekt kast ikke altid lander samme sted
-      const vinkel = vinkelFra(sF) + (Math.random() * 2 - 1) * 0.8 * Math.PI / 180;
-      const laengde = laengdeFra(kF) * (1 + (Math.random() * 2 - 1) * 0.02);
-      const land = { u: Math.sin(vinkel) * laengde, v: Math.cos(vinkel) * laengde };
+      // Disc'en lander der, hvor krydset står, med en lille smule naturlig variation
+      const laengde = laengdeFra(kraft) * (1 + (Math.random() * 2 - 1) * 0.02), maal = punkt(laengde);
+      const land = { u: maal.u + (Math.random() * 2 - 1) * 0.014 * laengde, v: maal.v };
       const top = Math.min(14, 0.12 * laengde + 1);
       pkt = Array.from({ length: 61 }, (_, i) => { const t = i / 60, w = tilVerden(land.u * t, land.v * t); return { ...w, z: 1.2 + top * Math.sin(Math.PI * t) - 1.2 * t }; });
       slutI = 60;
@@ -867,7 +897,11 @@ function spilHul(dag, tilstand) {
       }
       const p = pkt[slutI];
       // Kun en approach kan gå direkte i kurven (et drive lander i bedste fald lige ved den)
-      if (!trae && P.type === "approach" && afstand(p, lay.kurv) <= 0.6) resultat = { type: "ind", tekst: st.kast === 0 ? "ACE!!! 🎉🥏" : "Lige i kurven! 🎉" };
+      if (!trae && P.type === "approach" && afstand(p, lay.kurv) <= 0.6) {
+        resultat = { type: "ind", tekst: st.kast === 0 ? "ACE!!! 🎉🥏" : "Lige i kurven! 🎉" };
+        // Flyvningen ender inde i kurven (ca. 0,65 m oppe) i stedet for på jorden foran den
+        pkt = pkt.map((q, i) => { const t = i / 60, w = t * t; return { x: q.x + (lay.kurv.x - p.x) * w, y: q.y + (lay.kurv.y - p.y) * w, z: q.z + 0.65 * t }; });
+      }
       else if (lay.iVand(p)) resultat = { type: "straf", tekst: "Plask! +1 strafkast" };
       else if (Math.abs(p.x) > lay.bredde || p.y > lay.L + 20 || p.y < -5) resultat = { type: "straf", tekst: "OB! +1 strafkast" };
       else resultat = { type: "ligger", p: mindstEnMeter(p), tekst: trae ? "Træ! 🌲" : (Math.abs(sF) <= 1 && Math.abs(kF) <= 1) ? "Flot kast!" : kF < -1 ? "For kort" : kF > 1 ? "For langt" : sF < 0 ? "Til venstre" : "Til højre" };
